@@ -192,6 +192,7 @@ def callback(yolo_data):
     # if current_step == 'grip':
     #     grip_bottle()
     match_direction(box)
+    approach(box)
 
     pub.publish(twist)
 
