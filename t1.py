@@ -108,6 +108,7 @@ def match_direction(box):
     """방향을 bottle 방향으로 일치시킴
     """
     global twist, before_direction, box_height, approach_threshold, approach_start_time, current_step
+    rospy.loginfo('Call match direction')
 
     # if box_height > approach_threshold:
     #     approach_start_time = time.time()
@@ -137,6 +138,7 @@ def approach(box):
     """
     global twist, box_height, current_step
 
+    rospy.loginfo('Call approach')
     if time.time() - approach_start_time >= moving_time:
         twist.linear.x = 0
         current_step = 'grip'
@@ -155,6 +157,7 @@ def grip_bottle():
     """
     global current_step
 
+    rospy.loginfo('Call grip')
     rospy.loginfo('grip bottle')
     joint(joint_diff=[0, 0.0, -0.8, 0.0])
     joint(joint_diff=[0, 1.1, -0.0, 0.0])
@@ -180,12 +183,13 @@ def callback(yolo_data):
 
     box_height = (box.ymax - box.ymin)  # box size 이용해서 근접 계산
 
-    if current_step == 'detect':
-        match_direction(box)
-    if current_step in ('detect', 'approach'):
-        approach(box)
-    if current_step == 'grip':
-        grip_bottle()
+    # if current_step == 'detect':
+    #     match_direction(box)
+    # if current_step in ('detect', 'approach'):
+    #     approach(box)
+    # if current_step == 'grip':
+    #     grip_bottle()
+    match_direction(box)
 
     pub.publish(twist)
 
