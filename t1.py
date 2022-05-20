@@ -23,7 +23,7 @@ from geometry_msgs.msg import Twist
 # parameters
 approach_threshold = 500  # approach까지 근접을 확인할 병의 높이 -> direction matching 중지
 linear_moving_speed = 0.02  # approach threshold 이후 직진 속도
-moving_time = 3  # approach threshold 이후 직진 시간
+moving_time = 8  # approach threshold 이후 직진 시간
 
 current_step = 'detect'  # detect|approach|grip
 
