@@ -33,7 +33,7 @@ pub = rospy.Publisher('cmd_vel', Twist, queue_size=20)
 before_direction = -1
 
 bottle_height_history = []
-bottle_height_window_size = 5
+bottle_height_window_size = 7
 
 sleep_time = 5
 twist = None
