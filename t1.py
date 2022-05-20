@@ -154,7 +154,8 @@ def approach(box):
 
     rospy.loginfo('linear x: ' + str(linear_moving_speed))
     twist.linear.x = linear_moving_speed
-    twist.angular.z = 0
+    # TODO: BUG:
+    # 매우 근접한 상태에서 bottle이 다른 label로 바뀌면서 스핀함 -> 컬러 필터 사용?
 
     # pub.publish(twist)
 
