@@ -21,12 +21,14 @@ from geometry_msgs.msg import Twist
 """
 
 # parameters
-approach_threshold = 150  # approach까지 근접을 확인할 병의 높이 -> direction matching 중지
+approach_threshold = 500  # approach까지 근접을 확인할 병의 높이 -> direction matching 중지
 linear_moving_speed = 0.02  # approach threshold 이후 직진 속도
 moving_time = 3  # approach threshold 이후 직진 시간
-box_height = 0
+
+current_step = 'detect'  # detect|approach|grip
 
 # global vars
+box_height = 0
 pub = rospy.Publisher('cmd_vel', Twist, queue_size=20)
 before_direction = -1
 
@@ -90,8 +92,12 @@ def match_direction(box):
     """
     global twist, before_direction, box_height, approach_threshold, approach_start_time
 
+    if current_step != 'detect':
+        return
+
     if box_height > approach_threshold:
         approach_start_time = time.time()
+        current_step = 'approach'
         return
 
     box_center = (box.xmin + box.xmax) // 2
@@ -114,6 +120,9 @@ def approach(box):
     """
     global twist, box_height
 
+    if current_step == 'grip':
+        return
+
     if time.time() - approach_start_time >= moving_time:
         return
 
@@ -127,6 +136,9 @@ def grip_bottle():
 
     무지성으로 병 잡고 20cm 이상 들어야 함
     """
+    if current_step != 'grip':
+        return
+
     joint(joint_diff=[0, 0.0, -0.8, 0.0])
     joint(joint_diff=[0, 1.1, -0.0, 0.0])
     gripper_move(-1.0)
