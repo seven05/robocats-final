@@ -40,6 +40,16 @@ gripper = None
 arm = None
 
 
+moveit_commander.roscpp_initialize(sys.argv)
+robot = moveit_commander.RobotCommander()
+scene = moveit_commander.PlanningSceneInterface()
+gripper = moveit_commander.MoveGroupCommander('gripper')
+arm = moveit_commander.MoveGroupCommander('arm')
+#gripper = moveit_commander.MoveGroupCommander('gripper')
+arm.allow_replanning(True)
+arm.set_planning_time(5)
+
+
 def joint(joint_diff=[0,0,0,0]):
     global arm, sleep_time
 
@@ -156,14 +166,14 @@ def main():
 
     rospy.init_node('listener', anonymous=True)
 
-    moveit_commander.roscpp_initialize(sys.argv)
-    robot = moveit_commander.RobotCommander()
-    scene = moveit_commander.PlanningSceneInterface()
-    gripper = moveit_commander.MoveGroupCommander('gripper')
-    arm = moveit_commander.MoveGroupCommander('arm')
-    #gripper = moveit_commander.MoveGroupCommander('gripper')
-    arm.allow_replanning(True)
-    arm.set_planning_time(5)
+    # moveit_commander.roscpp_initialize(sys.argv)
+    # robot = moveit_commander.RobotCommander()
+    # scene = moveit_commander.PlanningSceneInterface()
+    # gripper = moveit_commander.MoveGroupCommander('gripper')
+    # arm = moveit_commander.MoveGroupCommander('arm')
+    # #gripper = moveit_commander.MoveGroupCommander('gripper')
+    # arm.allow_replanning(True)
+    # arm.set_planning_time(5)
 
     rospy.Subscriber('/darknet_ros/bounding_boxes', BoundingBoxes, callback)
 
