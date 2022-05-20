@@ -155,7 +155,6 @@ def main():
     twist.angular.x = twist.angular.y = 0.0
 
     rospy.init_node('listener', anonymous=True)
-    rospy.Subscriber('/darknet_ros/bounding_boxes', BoundingBoxes, callback)
 
     moveit_commander.roscpp_initialize(sys.argv)
     robot = moveit_commander.RobotCommander()
@@ -165,6 +164,8 @@ def main():
     #gripper = moveit_commander.MoveGroupCommander('gripper')
     arm.allow_replanning(True)
     arm.set_planning_time(5)
+
+    rospy.Subscriber('/darknet_ros/bounding_boxes', BoundingBoxes, callback)
 
     rospy.spin()
 
