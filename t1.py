@@ -120,7 +120,7 @@ def match_direction(box):
     box_center = (box.xmin + box.xmax) // 2
     box_center = float(box_center)
     move = (640 - box_center) / 640
-    rospy.loginfo('correction: ' + str(move))
+    rospy.loginfo('correction/height: ' + str(move) + '\t' + str(box_height))
 
     if abs(move) < 0.1:
         twist.angular.z = 0
@@ -141,6 +141,7 @@ def approach(box):
         return
 
     if time.time() - approach_start_time >= moving_time:
+        current_step = 'grip'
         return
 
     rospy.loginfo('linear x: ' + str(linear_moving_speed))
