@@ -117,7 +117,7 @@ def approach(box):
     if time.time() - approach_start_time >= moving_time:
         return
 
-    twist.linear = linear_moving_speed
+    twist.linear.x = linear_moving_speed
 
     pub.publish(twist)
 
