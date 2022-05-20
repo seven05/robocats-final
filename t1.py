@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
+import sys
 import time
 
+import geometry_msgs.msg
+import moveit_commander
+import moveit_msgs.msg
+import numpy as np
 import rospy
-from std_msgs.msg import String
 from darknet_ros_msgs.msg import BoundingBoxes
 from geometry_msgs.msg import Twist
-
-pub = rospy.Publisher('cmd_vel', Twist, queue_size=20)
-before_direction = -1
+# from std_msgs.msg import String
 
 """
 1. 카메라로 bottle을 찾은 후 bottle을 인식하고 방향을 수정하면서
@@ -25,8 +27,51 @@ moving_time = 3  # approach threshold 이후 직진 시간
 box_height = 0
 
 # global vars
+pub = rospy.Publisher('cmd_vel', Twist, queue_size=20)
+before_direction = -1
+
+moveit_commander.roscpp_initialize(sys.argv)
+robot = moveit_commander.RobotCommander()
+scene = moveit_commander.PlanningSceneInterface()
+gripper = moveit_commander.MoveGroupCommander('gripper')
+arm = moveit_commander.MoveGroupCommander('arm')
+#gripper = moveit_commander.MoveGroupCommander('gripper')
+arm.allow_replanning(True)
+arm.set_planning_time(5)
+sleep_time = 5
 twist = None
 approach_start_time = 0
+
+
+def joint(joint_diff=[0,0,0,0]):
+    joint_values = arm.get_current_joint_values()
+    rospy.sleep(sleep_time)
+    print (joint_values)
+    joint_temp = [0,0,0,0]
+    for i in range(4):
+        joint_values[i] = joint_values[i] + joint_diff[i]
+    #joint_values[0] = -0.0
+    #joint_values[1] = -0.0
+    #joint_values[2] = -0.0
+    #joint_values[3] = -0.0
+    print (type(joint_values))
+    print (joint_values)
+    arm.go(joints=joint_values, wait=True)
+    rospy.sleep(sleep_time)
+    arm.stop()
+    rospy.sleep(sleep_time)
+    arm.clear_pose_targets()
+    rospy.sleep(sleep_time)
+
+
+def gripper_move(coeff):
+    #coeff : 1 or -1
+    joint_values = gripper.get_current_joint_values()
+    rospy.sleep(sleep_time)
+    print ("gripper joint values : " + str(joint_values) )
+    #gripper.set_joint_value_target([0.01])
+    gripper.go([0.01*coeff,0.0], wait=True)
+    rospy.sleep(sleep_time)
 
 
 def match_direction(box):
@@ -71,7 +116,11 @@ def grip_bottle():
 
     무지성으로 병 잡고 20cm 이상 들어야 함
     """
-    pass  # TODO: FIXME:
+    joint(joint_diff=[0, 0.0, -0.8, 0.0])
+    joint(joint_diff=[0, 1.1, -0.0, 0.0])
+    gripper_move(-1.0)
+    joint(joint_diff=[0, -0.8, 0.0, 0.0])
+    #joint(joint_diff=[0, 0.0, -0.8, 0.0])
 
 
 
