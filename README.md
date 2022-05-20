@@ -4,7 +4,11 @@ Robocats Final
 <img src="https://user-images.githubusercontent.com/8157830/169524284-0042b9cb-1c60-467e-b46c-0c313682f96b.png" style="height:1em">
 </h1>
 
-> 매 주말마다 하는 어썸한 해커톤
+> 매 주말마다 하는 어썸한 로보틱스 해커톤
+
+<div style="text-align:center">
+<img src="https://user-images.githubusercontent.com/8157830/169529053-f636e1be-9931-43af-a8a3-c047d9b4517f.png">
+</div>
 
 ## 🚧 Progress
 
