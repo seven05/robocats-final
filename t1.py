@@ -87,6 +87,19 @@ def gripper_move(coeff):
     rospy.sleep(sleep_time)
 
 
+def reset_grip():
+    """로봇팔 초기 상태로 리셋
+    """
+    global sleep_time
+
+    joint_values = arm.get_current_joint_values()
+    for i in range(4):
+        if(abs(joint_values[i]) > 0.1):
+            joint_values[i] = 0.0
+    arm.go(joint_values,wait=True)
+    rospy.sleep(sleep_time)
+
+
 def match_direction(box):
     """방향을 bottle 방향으로 일치시킴
     """
@@ -146,7 +159,6 @@ def grip_bottle():
     #joint(joint_diff=[0, 0.0, -0.8, 0.0])
 
 
-
 def callback(yolo_data):
     global twist, before_direction, box_height
 
@@ -186,6 +198,8 @@ def main():
     # #gripper = moveit_commander.MoveGroupCommander('gripper')
     # arm.allow_replanning(True)
     # arm.set_planning_time(5)
+
+    reset_grip()
 
     rospy.Subscriber('/darknet_ros/bounding_boxes', BoundingBoxes, callback)
 
