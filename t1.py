@@ -124,7 +124,7 @@ def match_direction(box):
     move = (640 - box_center) / 640
     rospy.loginfo('correction/height/smooth: ' + str(move) + '\t' + str(box_height) + '\t' + str(smoothed_box_height))
 
-    if abs(move) < 0.1:
+    if abs(move) < 0.08:
         twist.angular.z = 0
         twist.linear.x = linear_moving_speed
         # # DEBUG: 찾으면 그냥 탈출하도록 함
@@ -154,6 +154,7 @@ def approach(box):
 
     rospy.loginfo('linear x: ' + str(linear_moving_speed))
     twist.linear.x = linear_moving_speed
+    twist.angular.z = 0
 
     # pub.publish(twist)
 
