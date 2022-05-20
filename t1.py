@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import time
+
 import rospy
 from std_msgs.msg import String
 from darknet_ros_msgs.msg import BoundingBoxes
@@ -11,22 +13,29 @@ before_direction = -1
 1. 카메라로 bottle을 찾은 후 bottle을 인식하고 방향을 수정하면서
 2. 카메라에 인식되는 bottle의 높이가 점점 커짐
 3. bottle_height가 approach_threshold를 초과하면 bottle 인식 중지
-4. bottle_height가 vicinity_threshold를 초과할 때 까지 직진
-5. vicinity_threshold를 초과하면 arm을 조작해서 bottle을 집기
+4. 정해진 시간만큼 직진
+5. 목표 시간만큼 직진 후 arm을 조작해서 bottle을 집기
+6. bottle을 20cm 이상 들어올리기
 """
 
+# parameters
 approach_threshold = 150  # approach까지 근접을 확인할 병의 높이 -> direction matching 중지
-vicinity_threshold = 200  # direction matching 중지 이후 로봇이 근접해서 카메라에서 인식되는 병의 높이 -> 팔로 잡으면 됨
+linear_moving_speed = 0.02  # approach threshold 이후 직진 속도
+moving_time = 3  # approach threshold 이후 직진 시간
 box_height = 0
+
+# global vars
 twist = None
+approach_start_time = 0
 
 
 def match_direction(box):
     """방향을 bottle 방향으로 일치시킴
     """
-    global twist, before_direction, box_height, approach_threshold
+    global twist, before_direction, box_height, approach_threshold, approach_start_time
 
     if box_height > approach_threshold:
+        approach_start_time = time.time()
         return
 
     box_center = (box.xmin + box.xmax) // 2
@@ -34,7 +43,7 @@ def match_direction(box):
     move = (640 - box_center) / 640
     rospy.loginfo('correction: ' + str(move))
 
-    if abs(move) < 0.15:
+    if abs(move) < 0.1:
         twist.angular.z = 0
     else:
         twist.angular.z = move * 0.5
@@ -47,15 +56,12 @@ def match_direction(box):
 def approach(box):
     """box_height가 vicinity_threashold를 넘을 때 까지 접근
     """
-    global twist, box_height, vicinity_threshold
+    global twist, box_height
 
-    if box_height > vicinity_threshold:
+    if time.time() - approach_start_time >= moving_time:
         return
 
-    linear_speed = (vicinity_threshold - box_height) / 100 * 0.05
-    linear_speed = min(linear_speed, 0.1)  # 최대 속도: 0.1
-    linear_speed = max(linear_speed, 0.01)  # 최대 속도: 0.01
-    twist.linear = linear_speed
+    twist.linear = linear_moving_speed
 
     pub.publish(twist)
 
