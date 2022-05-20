@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import rospy
 from std_msgs.msg import String
 from darknet_ros_msgs.msg import BoundingBoxes

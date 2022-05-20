@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import rospy
 from std_msgs.msg import String
 from darknet_ros_msgs.msg import BoundingBoxes
@@ -31,7 +32,7 @@ def match_direction(box):
     box_center = (box.xmin + box.xmax) // 2
     box_center = float(box_center)
     move = (640 - box_center) / 640
-    rospy.loginfo(f'correction: {str(move)}')
+    rospy.loginfo('correction: ' + str(move))
 
     if abs(move) < 0.15:
         twist.angular.z = 0

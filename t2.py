@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 def main():
     pass  # TODO: Write entry code here
 

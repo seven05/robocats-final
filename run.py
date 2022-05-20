@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import argparse
 import importlib
 import sys
@@ -18,12 +19,12 @@ def main():
     elif args.task in ('4', 't4', 'task4'):
         task_id = 4
     else:
-        print(f'Wrong format input: {args.task}')
+        print('Wrong format input: ' + str(args.task))
         print('Plz try again, This process will be exited.')
         sys.exit(1)
 
-    print(f'Run task#{task_id}')
-    task_module = importlib.import_module(f't{task_id}')
+    print('Run task ' + str(task_id))
+    task_module = importlib.import_module('t' + str(task_id))
     task_module.main()
 
 if __name__ == '__main__':

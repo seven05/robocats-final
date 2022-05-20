@@ -11,7 +11,7 @@ Robocats Final
 </div>
 
 ## 🪛 Dependencies
-- python 3.6+
+- python 2.7
 
 ## 🔥 How to use
 Run `run.py` with task id (1, 2, 3, 4)
