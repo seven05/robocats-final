@@ -23,7 +23,7 @@ from geometry_msgs.msg import Twist
 # parameters
 approach_threshold = 500  # approach까지 근접을 확인할 병의 높이 -> direction matching 중지
 linear_moving_speed = 0.02  # approach threshold 이후 직진 속도
-moving_time = 8  # approach threshold 이후 직진 시간
+moving_time = 15  # approach threshold 이후 직진 시간
 
 current_step = 'detect'  # detect|approach|grip
 
@@ -31,6 +31,9 @@ current_step = 'detect'  # detect|approach|grip
 box_height = 0
 pub = rospy.Publisher('cmd_vel', Twist, queue_size=20)
 before_direction = -1
+
+bottle_height_history = []
+bottle_height_window_size = 5
 
 sleep_time = 5
 twist = None
@@ -107,10 +110,11 @@ def reset_grip():
 def match_direction(box):
     """방향을 bottle 방향으로 일치시킴
     """
-    global twist, before_direction, box_height, approach_threshold, approach_start_time, current_step, linear_moving_speed
+    global twist, before_direction, box_height, approach_threshold, approach_start_time, current_step, linear_moving_speed, bottle_height_window_size, bottle_height_history
     rospy.loginfo('Call match direction')
 
-    if box_height > approach_threshold:
+    smoothed_box_height = sum(bottle_height_history) / len(bottle_height_history)
+    if smoothed_box_height > approach_threshold:
         approach_start_time = time.time()
         current_step = 'approach'
         return
@@ -171,7 +175,7 @@ def grip_bottle():
 
 
 def callback(yolo_data):
-    global twist, before_direction, box_height, pub
+    global twist, before_direction, box_height, pub, bottle_height_history, bottle_height_window_size
 
     # yolo data에서 bottle 이름을 가진 label만 추출
     bottle_boxes = [each for each in yolo_data.bounding_boxes if each.Class == 'bottle']
@@ -186,6 +190,8 @@ def callback(yolo_data):
     box = sorted(bottle_boxes, key=lambda box: box.xmin)[0]
 
     box_height = (box.ymax - box.ymin)  # box size 이용해서 근접 계산
+    bottle_height_history = [box_height] + bottle_height_history
+    bottle_height_history[:bottle_height_window_size]
 
     rospy.loginfo('current_step: ' + str(current_step))
 
