@@ -30,20 +30,19 @@ box_height = 0
 pub = rospy.Publisher('cmd_vel', Twist, queue_size=20)
 before_direction = -1
 
-moveit_commander.roscpp_initialize(sys.argv)
-robot = moveit_commander.RobotCommander()
-scene = moveit_commander.PlanningSceneInterface()
-gripper = moveit_commander.MoveGroupCommander('gripper')
-arm = moveit_commander.MoveGroupCommander('arm')
-#gripper = moveit_commander.MoveGroupCommander('gripper')
-arm.allow_replanning(True)
-arm.set_planning_time(5)
 sleep_time = 5
 twist = None
 approach_start_time = 0
 
+robot = None
+scene = None
+gripper = None
+arm = None
+
 
 def joint(joint_diff=[0,0,0,0]):
+    global arm, sleep_time
+
     joint_values = arm.get_current_joint_values()
     rospy.sleep(sleep_time)
     print (joint_values)
@@ -65,6 +64,8 @@ def joint(joint_diff=[0,0,0,0]):
 
 
 def gripper_move(coeff):
+    global gripper
+
     #coeff : 1 or -1
     joint_values = gripper.get_current_joint_values()
     rospy.sleep(sleep_time)
@@ -147,12 +148,23 @@ def callback(yolo_data):
 
 
 def main():
+    global robot, scene, gripper, arm
+
     twist = Twist()
     twist.linear.x = twist.linear.y = twist.linear.z = 0.0
     twist.angular.x = twist.angular.y = 0.0
 
     rospy.init_node('listener', anonymous=True)
     rospy.Subscriber('/darknet_ros/bounding_boxes', BoundingBoxes, callback)
+
+    moveit_commander.roscpp_initialize(sys.argv)
+    robot = moveit_commander.RobotCommander()
+    scene = moveit_commander.PlanningSceneInterface()
+    gripper = moveit_commander.MoveGroupCommander('gripper')
+    arm = moveit_commander.MoveGroupCommander('arm')
+    #gripper = moveit_commander.MoveGroupCommander('gripper')
+    arm.allow_replanning(True)
+    arm.set_planning_time(5)
 
     rospy.spin()
 
