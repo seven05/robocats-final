@@ -140,6 +140,7 @@ def approach(box):
     if time.time() - approach_start_time >= moving_time:
         return
 
+    rospy.loginfo('linear x: ' + str(linear_moving_speed))
     twist.linear.x = linear_moving_speed
 
     pub.publish(twist)
@@ -155,6 +156,7 @@ def grip_bottle():
     if current_step != 'grip':
         return
 
+    rospy.loginfo('grip bottle')
     joint(joint_diff=[0, 0.0, -0.8, 0.0])
     joint(joint_diff=[0, 1.1, -0.0, 0.0])
     gripper_move(-1.0)
