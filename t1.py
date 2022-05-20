@@ -129,7 +129,7 @@ def match_direction(box):
 
     before_direction = -1 if move < 0 else 1
 
-    pub.publish(twist)
+    # pub.publish(twist)
 
 
 def approach(box):
@@ -147,7 +147,7 @@ def approach(box):
     rospy.loginfo('linear x: ' + str(linear_moving_speed))
     twist.linear.x = linear_moving_speed
 
-    pub.publish(twist)
+    # pub.publish(twist)
 
 
 def grip_bottle():
@@ -169,7 +169,7 @@ def grip_bottle():
 
 
 def callback(yolo_data):
-    global twist, before_direction, box_height
+    global twist, before_direction, box_height, pub
 
     # yolo data에서 bottle 이름을 가진 label만 추출
     bottle_boxes = [each for each in yolo_data.bounding_boxes if each.Class == 'bottle']
@@ -188,6 +188,8 @@ def callback(yolo_data):
     match_direction(box)
     approach(box)
     grip_bottle()
+
+    pub.publish(twist)
 
 
 def main():
