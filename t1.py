@@ -109,10 +109,10 @@ def match_direction(box):
     """
     global twist, before_direction, box_height, approach_threshold, approach_start_time, current_step
 
-    if box_height > approach_threshold:
-        approach_start_time = time.time()
-        current_step = 'approach'
-        return
+    # if box_height > approach_threshold:
+    #     approach_start_time = time.time()
+    #     current_step = 'approach'
+    #     return
 
     box_center = (box.xmin + box.xmax) // 2
     box_center = float(box_center)
@@ -121,6 +121,9 @@ def match_direction(box):
 
     if abs(move) < 0.1:
         twist.angular.z = 0
+        # DEBUG: 찾으면 그냥 탈출하도록 함
+        current_step = 'approach'
+        return
     else:
         twist.angular.z = move * 0.5
 
@@ -135,6 +138,7 @@ def approach(box):
     global twist, box_height, current_step
 
     if time.time() - approach_start_time >= moving_time:
+        twist.linear.x = 0
         current_step = 'grip'
         return
 
