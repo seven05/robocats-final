@@ -23,8 +23,7 @@ def callback(data):
     box_center = (box.xmin + box.xmax) // 2
     box_center = float(box_center)
     move = (640 - box_center) / 640
-    rospy.loginfo('move: ' + str(move))
-    rospy.loginfo('height: ' + str(box_height))
+    rospy.loginfo('move/height: ' + str(move) + '\t' + str(box_height))
 
     if abs(move) < 0.15:
         twist.angular.z = 0
