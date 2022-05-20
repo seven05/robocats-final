@@ -10,6 +10,16 @@ Robocats Final
 <img src="https://user-images.githubusercontent.com/8157830/169529053-f636e1be-9931-43af-a8a3-c047d9b4517f.png">
 </div>
 
+## 🪛 Dependencies
+- python 3.6+
+
+## 🔥 How to use
+Run `run.py` with task id (1, 2, 3, 4)
+### Example
+```
+python run.py 1
+```
+
 ## 🚧 Progress
 
 - [ ] Task 1: Grip bottle
