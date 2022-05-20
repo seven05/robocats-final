@@ -148,7 +148,7 @@ def callback(yolo_data):
 
 
 def main():
-    global robot, scene, gripper, arm
+    global twist, robot, scene, gripper, arm
 
     twist = Twist()
     twist.linear.x = twist.linear.y = twist.linear.z = 0.0
