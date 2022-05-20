@@ -191,7 +191,7 @@ def callback(yolo_data):
 
     box_height = (box.ymax - box.ymin)  # box size 이용해서 근접 계산
     bottle_height_history = [box_height] + bottle_height_history
-    bottle_height_history[:bottle_height_window_size]
+    bottle_height_history = bottle_height_history[:bottle_height_window_size]
 
     rospy.loginfo('current_step: ' + str(current_step))
 
