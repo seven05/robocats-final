@@ -104,7 +104,7 @@ def reset_grip():
 def match_direction(box):
     """방향을 bottle 방향으로 일치시킴
     """
-    global twist, before_direction, box_height, approach_threshold, approach_start_time
+    global twist, before_direction, box_height, approach_threshold, approach_start_time, current_step
 
     if current_step != 'detect':
         return
@@ -132,7 +132,7 @@ def match_direction(box):
 def approach(box):
     """box_height가 vicinity_threashold를 넘을 때 까지 접근
     """
-    global twist, box_height
+    global twist, box_height, current_step
 
     if current_step == 'grip':
         return
@@ -150,6 +150,8 @@ def grip_bottle():
 
     무지성으로 병 잡고 20cm 이상 들어야 함
     """
+    global current_step
+
     if current_step != 'grip':
         return
 
