@@ -107,7 +107,7 @@ def reset_grip():
 def match_direction(box):
     """방향을 bottle 방향으로 일치시킴
     """
-    global twist, before_direction, box_height, approach_threshold, approach_start_time, current_step
+    global twist, before_direction, box_height, approach_threshold, approach_start_time, current_step, linear_moving_speed
     rospy.loginfo('Call match direction')
 
     if box_height > approach_threshold:
@@ -122,10 +122,12 @@ def match_direction(box):
 
     if abs(move) < 0.1:
         twist.angular.z = 0
+        twist.linear.x = linear_moving_speed
         # # DEBUG: 찾으면 그냥 탈출하도록 함
         # current_step = 'approach'
         return
     else:
+        twist.linear.x = 0
         twist.angular.z = move * 0.5
 
     before_direction = -1 if move < 0 else 1
@@ -187,14 +189,12 @@ def callback(yolo_data):
 
     rospy.loginfo('current_step: ' + str(current_step))
 
-    # if current_step == 'detect':
-    #     match_direction(box)
-    # if current_step in ('detect', 'approach'):
-    #     approach(box)
-    # if current_step == 'grip':
-    #     grip_bottle()
-    match_direction(box)
-    approach(box)
+    if current_step == 'detect':
+        match_direction(box)
+    elif current_step == 'approach':
+        approach(box)
+    elif current_step == 'grip':
+        grip_bottle()
 
     pub.publish(twist)
 
