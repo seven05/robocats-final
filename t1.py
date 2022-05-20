@@ -93,11 +93,14 @@ def reset_grip():
     global sleep_time
 
     joint_values = arm.get_current_joint_values()
+    chk = False
     for i in range(4):
         if(abs(joint_values[i]) > 0.1):
+            chk = True
             joint_values[i] = 0.0
-    arm.go(joint_values,wait=True)
-    rospy.sleep(sleep_time)
+    if(chk):
+        arm.go(joint_values,wait=True)
+        rospy.sleep(sleep_time)
     gripper_move(1.5)
 
 
