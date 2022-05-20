@@ -139,7 +139,9 @@ def approach(box):
     global twist, box_height, current_step
 
     rospy.loginfo('Call approach')
-    if time.time() - approach_start_time >= moving_time:
+    current_time = time.time()
+    rospy.loginfo('current_time=' + str(current_time) + '\tapproach_start_time=' + str(approach_start_time) + '\tmoving_time=' + str(moving_time))
+    if current_time - approach_start_time >= moving_time:
         twist.linear.x = 0
         current_step = 'grip'
         return
