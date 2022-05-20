@@ -98,6 +98,7 @@ def reset_grip():
             joint_values[i] = 0.0
     arm.go(joint_values,wait=True)
     rospy.sleep(sleep_time)
+    gripper_move(1.5)
 
 
 def match_direction(box):
