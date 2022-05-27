@@ -110,8 +110,12 @@ class RobotOperator():
         rospy.spin()
 
     def yolo_callback(self, data):
-        assert (self.current_state == "sense")
-        self.yolo_data = data
+        """Return x coordinates of center of box which is bottle on the **far right**
+        """
+        # assert (self.current_state == "sense")
+        bottle_boxes = [each for each in data.bounding_boxes if each.Class == 'bottle']
+        bottle_center_xs = [(each.xmin + each.xmax) // 2 for each in bottle_boxes]
+        self.yolo_data = sorted(bottle_center_xs)[-1]  # -1: far right / 0: far left
 
     def lidar_callback(self, data):
         # assert(self.current_state == "senser")
