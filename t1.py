@@ -1,23 +1,21 @@
-'''imports'''
+# -*- coding: utf-8 -*-
 import math
-import cv2
-import roslib
-import sys
-import rospy
-import cv2
-from std_msgs.msg import String
-from sensor_msgs.msg import Image
-from cv_bridge import CvBridge, CvBridgeError
-import numpy as np
 import sys
 import time
+
+import cv2
 import geometry_msgs.msg
 import moveit_commander
 import moveit_msgs.msg
 import numpy as np
+import roslib
 import rospy
+from cv_bridge import CvBridge, CvBridgeError
 from darknet_ros_msgs.msg import BoundingBoxes
 from geometry_msgs.msg import Twist
+from sensor_msgs.msg import Image
+from std_msgs.msg import Float32, String
+
 from scipy import ndimage
 
 ''' moveit commander settings '''
@@ -29,6 +27,7 @@ arm = moveit_commander.MoveGroupCommander('arm')
 #gripper = moveit_commander.MoveGroupCommander('gripper')
 arm.allow_replanning(True)
 arm.set_planning_time(5)
+
 
 class RobotOperator():
     def __init__ (self):
@@ -101,19 +100,29 @@ class RobotOperator():
     def subscribe(self):
         rospy.init_node('RobotOperator', anonymous=True)
         rospy.Subscriber('/darknet_ros/bounding_boxes', BoundingBoxes, self.yolo_callback)
-        rospy.Subscriber('/darknet_ros/bounding_boxes', BoundingBoxes, self.lidar_callback)
+        rospy.Subscriber('/scan_heading', Float32, self.lidar_callback)
         rospy.Subscriber('/video_source/raw_2', Image, self.color_callback)
-        
+
         while(self.current_state != "halt"):
             self.run_proc()
         #TODO : Add lidar callback, color filter callback
         rospy.spin()
-        pass   
-     
+
     def yolo_callback(self, data):
-        self.yolo_data = data
+        """Return x coordinates of center of box which is bottle on the **far right**
+        """
+        # assert (self.current_state == "sense")
+        bottle_boxes = [
+            each for each in data.bounding_boxes if each.Class == 'bottle']
+        bottle_center_xs = [(each.xmin + each.xmax) //
+                            2 for each in bottle_boxes]
+        # -1: far right / 0: far left
+        self.yolo_data = sorted(bottle_center_xs)[-1]
+
     def lidar_callback(self, data):
-        self.lidar_data = data
+        # assert(self.current_state == "senser")
+        self.lidar_data = data.data
+        
     def color_callback(self,data):
         im = np.frombuffer(data.data, dtype=np.uint8).reshape(
             data.height, data.width, -1)
@@ -149,7 +158,7 @@ class RobotOperator():
         #if cv2.waitKey(5) & 0xFF == 27:
         #    sys.exit()
         return (int(com[1]), int(com[0]))
-        
+
     def set_next_state(self, next_act = None):
         # assert current state before change
         if (self.current_state == "decide"):
@@ -164,45 +173,45 @@ class RobotOperator():
         self.twist.angular.z = 0.1 * self.before_direction
         self.pub.publish(self.twist)
         return
-    
+
     def find_target(self):
         # current state : act_find
         while(self.yolo_data is None):
             self.rotate_right()
         self.set_next_state("decide")
         return
-    
-    def match_direction():
+
+    def match_direction(self):
         pass
-        
-    def get_front():
+
+    def get_front(self):
         pass
-    
+
     def approach(self):
         while(self.lidar_data >= self.lidar_threshold):
             self.match_direction()
             self.get_front()
         self.set_next_state("decide")
         pass
-    
+
     def gripper(self):
         pass
         self.set_next_state("halt")
         return
-    
+
     def robot_halt(self):
         pass
         return
-    
+
     def grip_condition_check(self, yolo_data, lidar_data, color_data):
         pass
         return True or False
-    
+
     def sensor_init(self):
         self.yolo_data = None
         self.lidar_data = None
         self.color_data = None
-    
+
     def run_proc(self):
         # current state : sense_color
         assert (self.current_state == "decide")
@@ -212,26 +221,20 @@ class RobotOperator():
             self.set_next_state("act_find")
             self.find_target()
             return
-        
+
         assert (self.current_state == "decide")
-        
+
         if(self.grip_condition_check(self.yolo_data, self.lidar_data, self.color_data)):
             self.set_next_state("act_gripper")
             self.gripper()
         else:
             self.set_next_state("act_approach")
             self.approach()
-           
+
 
 def main():
-
-    rospy.init_node('listener', anonymous=True)
-
-    rospy.Subscriber('/darknet_ros/bounding_boxes', BoundingBoxes, callback)
-    # TODO : lidar subscriber
-    rospy.lidarsubscriber
-    
-    rospy.spin()
+    operator = RobotOperator()
+    operator.subscribe()
 
 
 if __name__ == '__main__':
