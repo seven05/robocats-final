@@ -38,7 +38,7 @@ class RobotOperator():
         self.twist = twist
 
         self.pub = rospy.Publisher('cmd_vel', Twist, queue_size=20)
-        
+
         self.before_direction = 1
         self.lidar_threshold = None
         self.yolo_data = None
@@ -47,11 +47,11 @@ class RobotOperator():
         self.current_state = None
         self.robot_state = ["sense_yolo", "sense_lidar", "sense_color",
                             "decide", "act_find", "act_approach", "act_grip", "halt"]
-        
+
         self.bridge = CvBridge()
         self.image_fetch = np.zeros((1280, 720, 3))
-        
-        
+
+
     def joint(joint_diff=[0,0,0,0]):
         global arm, sleep_time
 
@@ -80,7 +80,7 @@ class RobotOperator():
         #gripper.set_joint_value_target([0.01])
         gripper.go([0.01*coeff,0.0], wait=True)
         rospy.sleep(sleep_time)
-        
+
     def reset_grip(self):
         """로봇팔 초기 상태로 리셋
         """
@@ -96,7 +96,7 @@ class RobotOperator():
             arm.go(joint_values,wait=True)
             rospy.sleep(sleep_time)
         self.gripper_move(1.5)
-        
+
     def subscribe(self):
         rospy.init_node('RobotOperator', anonymous=True)
         rospy.Subscriber('/darknet_ros/bounding_boxes', BoundingBoxes, self.yolo_callback)
@@ -122,7 +122,7 @@ class RobotOperator():
     def lidar_callback(self, data):
         # assert(self.current_state == "senser")
         self.lidar_data = data.data
-        
+
     def color_callback(self,data):
         im = np.frombuffer(data.data, dtype=np.uint8).reshape(
             data.height, data.width, -1)
@@ -141,7 +141,7 @@ class RobotOperator():
         if not math.isnan(com[0]):
             cv2.circle(result, (int(com[1]), int(com[0])), 5, (255, 255, 255), -1)
             self.color_data = data
-        
+
         if np.any(result):
             nzeros = np.nonzero(result)
             x_max = np.max(nzeros[1])
@@ -168,7 +168,7 @@ class RobotOperator():
             self.current_state = "sense_yolo"
         elif (self.current_state == "act_grip"):
             self.current_state = "halt"
-    
+
     def rotate_right(self):
         self.twist.angular.z = 0.1 * self.before_direction
         self.pub.publish(self.twist)
@@ -184,13 +184,13 @@ class RobotOperator():
     def match_direction(self):
         pass
 
-    def get_front(self):
+    def go_front(self):
         pass
 
     def approach(self):
         while(self.lidar_data >= self.lidar_threshold):
             self.match_direction()
-            self.get_front()
+            self.go_front()
         self.set_next_state("decide")
         pass
 
@@ -215,7 +215,7 @@ class RobotOperator():
     def run_proc(self):
         # current state : sense_color
         assert (self.current_state == "decide")
-        
+
         if(self.yolo_data is None):
             # go to next state
             self.set_next_state("act_find")
