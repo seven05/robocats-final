@@ -102,9 +102,11 @@ class RobotOperator():
         rospy.Subscriber('/darknet_ros/bounding_boxes', BoundingBoxes, self.yolo_callback)
         rospy.Subscriber('/scan_heading', Float32, self.lidar_callback)
         rospy.Subscriber('/video_source/raw_2', Image, self.color_callback)
-
+        
         while(self.current_state != "halt"):
             self.run_proc()
+            
+        self.robot_halt()
         #TODO : Add lidar callback, color filter callback
         rospy.spin()
 
@@ -124,6 +126,8 @@ class RobotOperator():
         self.lidar_data = data.data
         
     def color_callback(self,data):
+        """color filter image, return center of mass of cluster (com_x,com_y)
+        """
         im = np.frombuffer(data.data, dtype=np.uint8).reshape(
             data.height, data.width, -1)
         im = cv2.blur(im, (25, 25))
@@ -157,6 +161,8 @@ class RobotOperator():
         #cv2.imshow('frame',result)
         #if cv2.waitKey(5) & 0xFF == 27:
         #    sys.exit()
+        
+        # com : com[1] x coordinate, com[0] y coordinate
         return (int(com[1]), int(com[0]))
 
     def set_next_state(self, next_act = None):
@@ -195,12 +201,20 @@ class RobotOperator():
         pass
 
     def gripper(self):
-        pass
+        self.joint(joint_diff=[0, 0.0, -0.8, 0.0])
+        self.joint(joint_diff=[0, 1.1, -0.0, 0.0])
+        self.gripper_move(-1.0)
+        self.joint(joint_diff=[0, -0.8, 0.0, 0.0])
         self.set_next_state("halt")
         return
 
     def robot_halt(self):
-        pass
+        self.twist.linear.x = 0.0
+        self.twist.linear.y = 0.0
+        self.twist.linear.z = 0.0
+        self.twist.angular.x = 0.0
+        self.twist.angular.y = 0.0
+        self.pub.publish(self.twist)
         return
 
     def grip_condition_check(self, yolo_data, lidar_data, color_data):
@@ -227,9 +241,11 @@ class RobotOperator():
         if(self.grip_condition_check(self.yolo_data, self.lidar_data, self.color_data)):
             self.set_next_state("act_gripper")
             self.gripper()
+            return
         else:
             self.set_next_state("act_approach")
             self.approach()
+            return
 
 
 def main():
