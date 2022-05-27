@@ -1,31 +1,29 @@
-'''imports'''
-import cv2
-import roslib
-import sys
-import rospy
-import cv2
-from std_msgs.msg import String
-from sensor_msgs.msg import Image
-from cv_bridge import CvBridge, CvBridgeError
-import numpy as np
+# -*- coding: utf-8 -*-
 import sys
 import time
+
+import cv2
 import geometry_msgs.msg
 import moveit_commander
 import moveit_msgs.msg
 import numpy as np
+import roslib
 import rospy
+from cv_bridge import CvBridge, CvBridgeError
 from darknet_ros_msgs.msg import BoundingBoxes
 from geometry_msgs.msg import Twist
+from sensor_msgs.msg import Image
+from std_msgs.msg import String
+
 from . import custom_msg
 
-''' robot state variables '''
+""" robot state variables """
 robot_state = ["sense_yolo", "sense_lidar", "sense_color",
             "decide", "act_find", "act_approach", "act_grip","halt"]
 success_state = [False,False,False,False,False,False,False]
 current_state = robot_state[6] #state halt
 
-''' sense data variables'''
+""" sense data variables"""
 bounding_box = None
 lidar_distance = None
 
@@ -43,12 +41,12 @@ def next_state(next_act = None):
         return "sense_yolo"
     elif (current_state == "act_grip"):
         return "halt"
-    
-    
-'''
+
+
+"""
 return None when no lidar connection or data
 return distance when lidar data collected
-'''
+"""
 def get_lidar_distance(lidar_data):
     pass
 
@@ -64,7 +62,7 @@ def callback(yolo_data):
         bounding_box = None
         success_state[0] = False
         current_state = next_state()
-        
+
     # box = bottle_boxes[0]  # legacy code; 항상 첫번째 bottle 추적 -> 경우에 따라 두 병의 순서가 계속 바뀌면 어떡할까?
     # bottle label이 여러개 발견 될 경우를 대비해서 xmin 좌표가 가장 작은 box 하나 추출
     box = sorted(bottle_boxes, key=lambda box: box.xmin)[0]
@@ -75,13 +73,13 @@ def callback(yolo_data):
 
 def callback_lidar(lidar_data):
     global lidar_distance, success_state, current_state
-    
+
     assert current_state == "sense_lidar"
     rospy.loginfo('current step: ' + str(current_state))
-    
+
     # TODO : write get_lidar_data
     l_distance = get_lidar_distance(lidar_data)
-    
+
     if(l_distance == None):
         lidar_distance = None
         success_state[1] = False
@@ -105,13 +103,13 @@ class RobotOperator():
         rospy.Subscriber('/darknet_ros/bounding_boxes', BoundingBoxes, self.yolo_callback)
         rospy.Subscriber('/darknet_ros/bounding_boxes', BoundingBoxes, self.yolo_callback)
         rospy.Subscriber('/darknet_ros/bounding_boxes', BoundingBoxes, self.color_callback)
-        
+
         while(self.current_state != "halt"):
             self.run_proc()
         #TODO : Add lidar callback, color filter callback
         rospy.spin()
-        pass   
-     
+        pass
+
     def yolo_callback(self, data):
         assert (self.current_state == "sense")
         self.yolo_data = data
@@ -123,7 +121,7 @@ class RobotOperator():
         self.set_next_state()
         self.color_data = data
         self.run_process()
-        
+
     def set_next_state(self, next_act = None):
         # assert current state before change
         if(self.current_state == "sense"):
@@ -135,68 +133,68 @@ class RobotOperator():
             self.current_state = "sense_yolo"
         elif (self.current_state == "act_grip"):
             self.current_state = "halt"
-    
+
     def rotate_right():
         pass
         return
-    
+
     def find_target(self):
         # current state : act_find
         while(self.yolo_data is None):
             self.rotate_right()
         self.set_next_state("sense_yolo")
         return
-    
+
     def match_direction():
         pass
-        
+
     def get_front():
         pass
-    
+
     def approach(self):
         while(self.lidar_data >= self.lidar_threshold):
             self.match_direction()
             self.get_front()
         self.set_next_state("sense_yolo")
         pass
-    
+
     def gripper(self):
         pass
         self.set_next_state("halt")
         return
-    
+
     def robot_halt(self):
         pass
         return
-    
+
     def grip_condition_check(self, yolo_data, lidar_data, color_data):
         pass
         return True or False
-    
+
     def sensor_init(self):
         self.yolo_data = None
         self.lidar_data = None
         self.color_data = None
-    
+
     def run_proc(self):
         # current state : sense_color
         assert (self.current_state == "decide")
-        
+
         if(self.yolo_data is None and self.color_data is None):
             # go to next state
             self.set_next_state("act_find")
             self.find_target()
             return
-        
+
         assert (self.current_state == "decide")
-        
+
         if(self.grip_condition_check(self.yolo_data, self.lidar_data, self.color_data)):
             self.set_next_state("act_gripper")
             self.gripper()
         else:
             self.set_next_state("act_approach")
             self.approach()
-           
+
 
 def main():
 
@@ -205,7 +203,7 @@ def main():
     rospy.Subscriber('/darknet_ros/bounding_boxes', BoundingBoxes, callback)
     # TODO : lidar subscriber
     rospy.lidarsubscriber
-    
+
     rospy.spin()
 
 
