@@ -40,7 +40,8 @@ class RobotOperator():
         self.pub = rospy.Publisher('cmd_vel', Twist, queue_size=20)
 
         self.before_direction = 1
-        self.lidar_threshold = None
+        self.yolo_threshold = 0.70
+        self.color_threshold = 0.33
         self.yolo_data = None
         self.lidar_data = None
         self.color_data = None
@@ -169,7 +170,7 @@ class RobotOperator():
         elif (self.current_state == "act_grip"):
             self.current_state = "halt"
 
-    def rotate_right(self):
+    def rotate_right(self):  # FIXME: before_direction을 곱하면 오른쪽으로 돌지 않고 이전에 돌던 방향으로 돕니다
         self.twist.angular.z = 0.1 * self.before_direction
         self.pub.publish(self.twist)
         return
@@ -182,13 +183,31 @@ class RobotOperator():
         return
 
     def match_direction(self):
-        pass
+        coordinates_criterion = None
+
+        if self.lidar_data >= self.yolo_threshold:
+            coordinates_criterion = self.yolo_data
+        elif self.lidar_data >= self.color_threshold:
+            coordinates_criterion = self.color_data and self.color_data[0]
+
+        if coordinates_criterion is None:
+            return
+
+        move = float(640 - coordinates_criterion) / 640
+
+        if abs(move) < 0.15:
+            self.twist.angular.z = 0
+        else:
+            self.twist.angular.z = move * 0.5
+
+        self.before_direction = -1 if move < 0 else 1
+        self.pub.publish(self.twist)
 
     def go_front(self):
         pass
 
     def approach(self):
-        while(self.lidar_data >= self.lidar_threshold):
+        while(self.lidar_data >= self.color_threshold):
             self.match_direction()
             self.go_front()
         self.set_next_state("decide")
