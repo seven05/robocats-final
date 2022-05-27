@@ -121,7 +121,7 @@ class RobotOperator():
         # assert(self.current_state == "senser")
         self.lidar_data = data.data
 
-    def color_callback(self,data):
+    def color_callback(self,data):  # TODO
         assert(self.current_state == "sense")
         self.set_next_state()
         self.color_data = data
@@ -139,7 +139,7 @@ class RobotOperator():
         elif (self.current_state == "act_grip"):
             self.current_state = "halt"
 
-    def rotate_right():
+    def rotate_right(self):
         pass
         return
 
@@ -150,10 +150,10 @@ class RobotOperator():
         self.set_next_state("sense_yolo")
         return
 
-    def match_direction():
+    def match_direction(self):
         pass
 
-    def get_front():
+    def get_front(self):
         pass
 
     def approach(self):
