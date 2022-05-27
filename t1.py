@@ -202,6 +202,7 @@ class RobotOperator():
 
         self.before_direction = -1 if move < 0 else 1
         self.pub.publish(self.twist)
+        print("match_direction published")
 
     def go_front(self):
         self.twist.linear.x = 0.02
