@@ -56,7 +56,7 @@ class RobotOperator():
         self.image_fetch = np.zeros((1280, 720, 3))
 
 
-    def joint(joint1,joint2,joint3,joint4):
+    def joint(self,joint1,joint2,joint3,joint4):
         global arm, sleep_time
         joint_diff = [joint1,joint2,joint3,joint4]
         joint_values = arm.get_current_joint_values()
