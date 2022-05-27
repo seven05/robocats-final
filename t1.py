@@ -89,6 +89,7 @@ def callback_lidar(lidar_data):
         success_state[1] = True
         current_state = next_state()
 
+
 class RobotOperator():
     def __init__ (self):
         self.lidar_threshold = None
@@ -202,14 +203,8 @@ class RobotOperator():
 
 
 def main():
-
-    rospy.init_node('listener', anonymous=True)
-
-    rospy.Subscriber('/darknet_ros/bounding_boxes', BoundingBoxes, callback)
-    # TODO : lidar subscriber
-    rospy.lidarsubscriber
-
-    rospy.spin()
+    operator = RobotOperator()
+    operator.subscribe()
 
 
 if __name__ == '__main__':
