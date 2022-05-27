@@ -40,6 +40,7 @@ class RobotOperator():
 
         self.pub = rospy.Publisher('cmd_vel', Twist, queue_size=20)
 
+        self.chk = False
         self.before_direction = 1
         self.yolo_threshold = 0.70
         self.color_threshold = 0.33
@@ -48,6 +49,8 @@ class RobotOperator():
         self.color_data = None
         self.current_state = "decide"
         self.robot_state = ["decide", "act_find", "act_approach", "act_grip", "halt"]
+        
+        self.find_criterion = 'yolo'
 
         self.bridge = CvBridge()
         self.image_fetch = np.zeros((1280, 720, 3))
@@ -188,6 +191,9 @@ class RobotOperator():
         if self.lidar_data >= self.yolo_threshold:
             coordinates_criterion = self.yolo_data
         elif self.lidar_data >= self.color_threshold:
+            if self.find_criterion == 'yolo':
+                print('Change find criterion: yolo -> color')
+                self.find_criterion = 'color'
             coordinates_criterion = self.color_data and self.color_data[0]
 
         if coordinates_criterion is None:
@@ -202,7 +208,7 @@ class RobotOperator():
 
         self.before_direction = -1 if move < 0 else 1
         self.pub.publish(self.twist)
-        print("match_direction published")
+        #print("match_direction published")
 
     def go_front(self):
         self.twist.linear.x = 0.02
@@ -247,10 +253,11 @@ class RobotOperator():
         self.color_data = None
 
     def run_proc(self):
+        
         if (self.current_state != "decide"):
             return
 
-        if(self.yolo_data is None):
+        if(self.yolo_data is None and self.chk == False):
             # go to next state
             self.set_next_state("act_find")
             self.find_target()
@@ -258,6 +265,8 @@ class RobotOperator():
 
         if (self.current_state != "decide"):
             return
+        
+        self.chk=True
 
         if(self.grip_condition_check()):
             self.set_next_state("act_grip")
