@@ -27,6 +27,7 @@ arm = moveit_commander.MoveGroupCommander('arm')
 #gripper = moveit_commander.MoveGroupCommander('gripper')
 arm.allow_replanning(True)
 arm.set_planning_time(5)
+sleep_time = 3
 
 
 class RobotOperator():
@@ -45,7 +46,7 @@ class RobotOperator():
         self.yolo_data = None
         self.lidar_data = None
         self.color_data = None
-        self.current_state = None
+        self.current_state = "decide"
         self.robot_state = ["sense_yolo", "sense_lidar", "sense_color",
                             "decide", "act_find", "act_approach", "act_grip", "halt"]
 
@@ -72,7 +73,7 @@ class RobotOperator():
 
 
     def gripper_move(self,coeff):
-        global gripper
+        global gripper, sleep_time
 
         #coeff : 1 or -1
         joint_values = gripper.get_current_joint_values()
@@ -103,6 +104,8 @@ class RobotOperator():
         rospy.Subscriber('/darknet_ros/bounding_boxes', BoundingBoxes, self.yolo_callback)
         rospy.Subscriber('/scan_heading', Float32, self.lidar_callback)
         rospy.Subscriber('/video_source/raw_2', Image, self.color_callback)
+        
+        self.current_state = "decide"
         
         while(self.current_state != "halt"):
             self.run_proc()
@@ -156,8 +159,11 @@ class RobotOperator():
     def set_next_state(self, next_act = None):
         # assert current state before change
         if (self.current_state == "decide"):
-            assert next_act == "act_find" or next_act == "act_approach" or next_act == "act_grip"
-            self.current_state = next_act
+            if(next_act == "act_find" or next_act == "act_approach" or next_act == "act_grip"):
+                self.current_state = next_act
+            else:
+                print("Error in set_next_state")
+            
         elif (self.current_state == "act_find" or self.current_state == "act_approach"):
             self.current_state = "sense_yolo"
         elif (self.current_state == "act_grip"):
@@ -226,9 +232,8 @@ class RobotOperator():
         self.pub.publish(self.twist)
         return
 
-    def grip_condition_check(self, yolo_data, lidar_data, color_data):
-        pass
-        return True or False
+    def grip_condition_check(self):
+        return self.lidar_data <= self.color_threshold
 
     def sensor_init(self):
         self.yolo_data = None
@@ -237,7 +242,8 @@ class RobotOperator():
 
     def run_proc(self):
         # current state : sense_color
-        assert (self.current_state == "decide")
+        if (self.current_state != "decide"):
+            return
 
         if(self.yolo_data is None):
             # go to next state
@@ -245,9 +251,10 @@ class RobotOperator():
             self.find_target()
             return
 
-        assert (self.current_state == "decide")
+        if (self.current_state != "decide"):
+            return
 
-        if(self.grip_condition_check(self.yolo_data, self.lidar_data, self.color_data)):
+        if(self.grip_condition_check()):
             self.set_next_state("act_gripper")
             self.gripper()
             return
