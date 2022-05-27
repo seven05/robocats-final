@@ -213,6 +213,7 @@ class RobotOperator():
         while(self.lidar_data >= self.color_threshold):
             self.match_direction()
             self.go_front()
+            time.sleep(0.01)
         self.robot_halt()
         self.set_next_state("decide")
         pass
