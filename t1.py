@@ -176,7 +176,7 @@ class RobotOperator():
         elif (self.current_state == "act_grip"):
             self.current_state = "halt"
 
-    def rotate_right(self):  # FIXME: before_direction을 곱하면 오른쪽으로 돌지 않고 이전에 돌던 방향으로 돕니다
+    def rotate_previous_direction(self):
         self.twist.angular.z = 0.1 * self.before_direction
         self.pub.publish(self.twist)
         return
@@ -184,7 +184,8 @@ class RobotOperator():
     def find_target(self):
         # current state : act_find
         while(self.yolo_data is None):
-            self.rotate_right()
+            self.rotate_previous_direction()
+        self.robot_halt()
         self.set_next_state("decide")
         return
 
@@ -217,7 +218,7 @@ class RobotOperator():
         while(self.lidar_data >= self.color_threshold):
             self.match_direction()
             self.go_front()
-        # TODO: stop 없어도 괜찮나요?
+        self.robot_halt()
         self.set_next_state("decide")
         pass
 
