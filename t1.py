@@ -43,7 +43,7 @@ class RobotOperator():
         self.chk = False
         self.before_direction = 1
         self.yolo_threshold = 0.70
-        self.color_threshold = 0.33
+        self.color_threshold = 0.3
         self.yolo_data = None
         self.lidar_data = None
         self.color_data = None
@@ -54,6 +54,9 @@ class RobotOperator():
 
         self.bridge = CvBridge()
         self.image_fetch = np.zeros((1280, 720, 3))
+        
+        gripper.go([0.015, 0.0], wait=True)
+        rospy.sleep(sleep_time)
 
 
     def joint(self,joint1,joint2,joint3,joint4):
