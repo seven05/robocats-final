@@ -47,8 +47,7 @@ class RobotOperator():
         self.lidar_data = None
         self.color_data = None
         self.current_state = "decide"
-        self.robot_state = ["sense_yolo", "sense_lidar", "sense_color",
-                            "decide", "act_find", "act_approach", "act_grip", "halt"]
+        self.robot_state = ["decide", "act_find", "act_approach", "act_grip", "halt"]
 
         self.bridge = CvBridge()
         self.image_fetch = np.zeros((1280, 720, 3))
@@ -117,7 +116,6 @@ class RobotOperator():
     def yolo_callback(self, data):
         """Return x coordinates of center of box which is bottle on the **far right**
         """
-        # assert (self.current_state == "sense")
         bottle_boxes = [
             each for each in data.bounding_boxes if each.Class == 'bottle']
 
@@ -131,7 +129,6 @@ class RobotOperator():
         self.yolo_data = sorted(bottle_center_xs)[-1]
 
     def lidar_callback(self, data):
-        # assert(self.current_state == "senser")
         self.lidar_data = data.data
 
     def color_callback(self,data):
@@ -165,7 +162,7 @@ class RobotOperator():
                 print("Error in set_next_state")
             
         elif (self.current_state == "act_find" or self.current_state == "act_approach"):
-            self.current_state = "sense_yolo"
+            self.current_state = "decide"
         elif (self.current_state == "act_grip"):
             self.current_state = "halt"
 
@@ -176,6 +173,8 @@ class RobotOperator():
 
     def find_target(self):
         # current state : act_find
+        if(self.current_state != "act_find"):
+            print("ERROR : state is wrong, not act find, ",self.current_state)
         self.rotate_previous_direction()
         while(self.yolo_data is None):
             pass
@@ -217,7 +216,8 @@ class RobotOperator():
         self.set_next_state("decide")
         pass
 
-    def gripper(self):
+    def gripper_execute(self):
+        print("gripper_execute called")
         self.joint(joint_diff=[0, 0.0, -0.8, 0.0])
         self.joint(joint_diff=[0, 1.1, -0.0, 0.0])
         self.gripper_move(-1.0)
@@ -245,7 +245,6 @@ class RobotOperator():
         self.color_data = None
 
     def run_proc(self):
-        # current state : sense_color
         if (self.current_state != "decide"):
             return
 
@@ -260,7 +259,7 @@ class RobotOperator():
 
         if(self.grip_condition_check()):
             self.set_next_state("act_gripper")
-            self.gripper()
+            self.gripper_execute()
             return
         else:
             self.set_next_state("act_approach")
