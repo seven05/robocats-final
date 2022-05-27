@@ -204,12 +204,14 @@ class RobotOperator():
         self.pub.publish(self.twist)
 
     def go_front(self):
-        pass
+        self.twist.linear.x = 0.02
+        self.pub.publish(self.twist)
 
     def approach(self):
         while(self.lidar_data >= self.color_threshold):
             self.match_direction()
             self.go_front()
+        # TODO: stop 없어도 괜찮나요?
         self.set_next_state("decide")
         pass
 
