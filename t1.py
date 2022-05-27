@@ -38,20 +38,21 @@ class RobotOperator():
         self.twist = twist
 
         self.pub = rospy.Publisher('cmd_vel', Twist, queue_size=20)
-        
+
         self.before_direction = 1
-        self.lidar_threshold = None
+        self.yolo_threshold = 0.70
+        self.color_threshold = 0.33
         self.yolo_data = None
         self.lidar_data = None
         self.color_data = None
         self.current_state = None
         self.robot_state = ["sense_yolo", "sense_lidar", "sense_color",
                             "decide", "act_find", "act_approach", "act_grip", "halt"]
-        
+
         self.bridge = CvBridge()
         self.image_fetch = np.zeros((1280, 720, 3))
-        
-        
+
+
     def joint(joint_diff=[0,0,0,0]):
         global arm, sleep_time
 
@@ -80,7 +81,7 @@ class RobotOperator():
         #gripper.set_joint_value_target([0.01])
         gripper.go([0.01*coeff,0.0], wait=True)
         rospy.sleep(sleep_time)
-        
+
     def reset_grip(self):
         """로봇팔 초기 상태로 리셋
         """
@@ -96,7 +97,7 @@ class RobotOperator():
             arm.go(joint_values,wait=True)
             rospy.sleep(sleep_time)
         self.gripper_move(1.5)
-        
+
     def subscribe(self):
         rospy.init_node('RobotOperator', anonymous=True)
         rospy.Subscriber('/darknet_ros/bounding_boxes', BoundingBoxes, self.yolo_callback)
@@ -124,7 +125,7 @@ class RobotOperator():
     def lidar_callback(self, data):
         # assert(self.current_state == "senser")
         self.lidar_data = data.data
-        
+
     def color_callback(self,data):
         """color filter image, return center of mass of cluster (com_x,com_y)
         """
@@ -145,7 +146,7 @@ class RobotOperator():
         if not math.isnan(com[0]):
             cv2.circle(result, (int(com[1]), int(com[0])), 5, (255, 255, 255), -1)
             self.color_data = data
-        
+
         if np.any(result):
             nzeros = np.nonzero(result)
             x_max = np.max(nzeros[1])
@@ -174,8 +175,8 @@ class RobotOperator():
             self.current_state = "sense_yolo"
         elif (self.current_state == "act_grip"):
             self.current_state = "halt"
-    
-    def rotate_right(self):
+
+    def rotate_right(self):  # FIXME: before_direction을 곱하면 오른쪽으로 돌지 않고 이전에 돌던 방향으로 돕니다
         self.twist.angular.z = 0.1 * self.before_direction
         self.pub.publish(self.twist)
         return
@@ -188,15 +189,35 @@ class RobotOperator():
         return
 
     def match_direction(self):
-        pass
+        coordinates_criterion = None
 
-    def get_front(self):
-        pass
+        if self.lidar_data >= self.yolo_threshold:
+            coordinates_criterion = self.yolo_data
+        elif self.lidar_data >= self.color_threshold:
+            coordinates_criterion = self.color_data and self.color_data[0]
+
+        if coordinates_criterion is None:
+            return
+
+        move = float(640 - coordinates_criterion) / 640
+
+        if abs(move) < 0.15:
+            self.twist.angular.z = 0
+        else:
+            self.twist.angular.z = move * 0.5
+
+        self.before_direction = -1 if move < 0 else 1
+        self.pub.publish(self.twist)
+
+    def go_front(self):
+        self.twist.linear.x = 0.02
+        self.pub.publish(self.twist)
 
     def approach(self):
-        while(self.lidar_data >= self.lidar_threshold):
+        while(self.lidar_data >= self.color_threshold):
             self.match_direction()
-            self.get_front()
+            self.go_front()
+        # TODO: stop 없어도 괜찮나요?
         self.set_next_state("decide")
         pass
 
@@ -229,7 +250,7 @@ class RobotOperator():
     def run_proc(self):
         # current state : sense_color
         assert (self.current_state == "decide")
-        
+
         if(self.yolo_data is None):
             # go to next state
             self.set_next_state("act_find")
