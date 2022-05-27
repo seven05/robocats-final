@@ -11,6 +11,7 @@ import roslib
 import rospy
 from cv_bridge import CvBridge, CvBridgeError
 from darknet_ros_msgs.msg import BoundingBoxes
+from std_msgs.msg import Float32
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Image
 from std_msgs.msg import String
@@ -102,8 +103,8 @@ class RobotOperator():
     def subscribe(self):
         rospy.init_node('RobotOperator', anonymous=True)
         rospy.Subscriber('/darknet_ros/bounding_boxes', BoundingBoxes, self.yolo_callback)
-        rospy.Subscriber('/scan_heading', BoundingBoxes, self.lidar_callback)
-        rospy.Subscriber('/darknet_ros/bounding_boxes', BoundingBoxes, self.color_callback)
+        rospy.Subscriber('/scan_heading', Float32, self.lidar_callback)
+        rospy.Subscriber('/darknet_ros/bounding_boxes', BoundingBoxes, self.color_callback)  # FIXME: change queue name and class of queue
 
         while(self.current_state != "halt"):
             self.run_proc()
