@@ -115,6 +115,11 @@ class RobotOperator():
         # assert (self.current_state == "sense")
         bottle_boxes = [
             each for each in data.bounding_boxes if each.Class == 'bottle']
+
+        if len(bottle_boxes) == 0:
+            self.yolo_data = None
+            return
+
         bottle_center_xs = [(each.xmin + each.xmax) //
                             2 for each in bottle_boxes]
         # -1: far right / 0: far left
@@ -129,7 +134,6 @@ class RobotOperator():
             data.height, data.width, -1)
         im = cv2.blur(im, (25, 25))
         hls = cv2.cvtColor(im, cv2.COLOR_BGR2HLS)
-        #print(im.shape)
 
         lower_color1 = np.array([160, 60, 60])
         upper_color1 = np.array([180, 255, 255])
@@ -138,27 +142,12 @@ class RobotOperator():
         result = cv2.bitwise_and(im, im, mask=mask1)
 
         com = ndimage.center_of_mass(result)
-        std = ndimage.standard_deviation(result)
+        # std = ndimage.standard_deviation(result)
         if not math.isnan(com[0]):
             cv2.circle(result, (int(com[1]), int(com[0])), 5, (255, 255, 255), -1)
-            self.color_data = data
-
-        if np.any(result):
-            nzeros = np.nonzero(result)
-            x_max = np.max(nzeros[1])
-            x_min = np.min(nzeros[1])
-            y_max = np.max(nzeros[0])
-            y_min = np.min(nzeros[0])
-            print("nzeros",x_max,x_min,y_max,y_min)
-            cv2.rectangle(result, (x_min,y_min),(x_max,y_max),(255,0,0),3)
-            print("box size: ",x_max - x_min, y_max - y_min)
-
-        #print(com)
-        #print(std)
-        #cv2.imshow('frame',result)
-        #if cv2.waitKey(5) & 0xFF == 27:
-        #    sys.exit()
-        return (int(com[1]), int(com[0]))
+            self.color_data = int(com[1]), int(com[0])
+        else:
+            self.color_data = None
 
     def set_next_state(self, next_act = None):
         # assert current state before change
