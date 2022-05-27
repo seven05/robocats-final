@@ -101,21 +101,22 @@ class RobotOperator():
     def subscribe(self):
         rospy.init_node('RobotOperator', anonymous=True)
         rospy.Subscriber('/darknet_ros/bounding_boxes', BoundingBoxes, self.yolo_callback)
-        rospy.Subscriber('/darknet_ros/bounding_boxes', BoundingBoxes, self.yolo_callback)
+        rospy.Subscriber('/scan_heading', BoundingBoxes, self.lidar_callback)
         rospy.Subscriber('/darknet_ros/bounding_boxes', BoundingBoxes, self.color_callback)
 
         while(self.current_state != "halt"):
             self.run_proc()
         #TODO : Add lidar callback, color filter callback
         rospy.spin()
-        pass
 
     def yolo_callback(self, data):
         assert (self.current_state == "sense")
         self.yolo_data = data
+
     def lidar_callback(self, data):
-        assert(self.current_state == "senser")
-        self.lidar_data = data
+        # assert(self.current_state == "senser")
+        self.lidar_data = data.data
+
     def color_callback(self,data):
         assert(self.current_state == "sense")
         self.set_next_state()
