@@ -195,10 +195,10 @@ class RobotOperator():
 
         move = float(640 - coordinates_criterion) / 640
 
-        if abs(move) < 0.15:
+        if abs(move) < 0.1:
             self.twist.angular.z = 0
         else:
-            self.twist.angular.z = move * 0.5
+            self.twist.angular.z = move / abs(move) * 0.1
 
         self.before_direction = -1 if move < 0 else 1
         self.pub.publish(self.twist)
