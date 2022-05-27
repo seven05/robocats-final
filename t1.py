@@ -176,8 +176,9 @@ class RobotOperator():
 
     def find_target(self):
         # current state : act_find
+        self.rotate_previous_direction()
         while(self.yolo_data is None):
-            self.rotate_previous_direction()
+            pass
         self.robot_halt()
         self.set_next_state("decide")
         return
@@ -208,6 +209,7 @@ class RobotOperator():
         self.pub.publish(self.twist)
 
     def approach(self):
+        print("approach")
         while(self.lidar_data >= self.color_threshold):
             self.match_direction()
             self.go_front()
@@ -224,11 +226,13 @@ class RobotOperator():
         return
 
     def robot_halt(self):
+        print("robot_halt")
         self.twist.linear.x = 0.0
         self.twist.linear.y = 0.0
         self.twist.linear.z = 0.0
         self.twist.angular.x = 0.0
         self.twist.angular.y = 0.0
+        self.twist.angular.z = 0.0
         self.pub.publish(self.twist)
         return
 
@@ -271,3 +275,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
