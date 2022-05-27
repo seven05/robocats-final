@@ -53,9 +53,9 @@ class RobotOperator():
         self.image_fetch = np.zeros((1280, 720, 3))
 
 
-    def joint(joint_diff=[0,0,0,0]):
+    def joint(joint1,joint2,joint3,joint4):
         global arm, sleep_time
-
+        joint_diff = [joint1,joint2,joint3,joint4]
         joint_values = arm.get_current_joint_values()
         rospy.sleep(sleep_time)
         print (joint_values)
@@ -218,10 +218,10 @@ class RobotOperator():
 
     def gripper_execute(self):
         print("gripper_execute called")
-        self.joint(joint_diff=[0, 0.0, -0.8, 0.0])
-        self.joint(joint_diff=[0, 1.1, -0.0, 0.0])
+        self.joint(0, 0.0, -0.8, 0.0)
+        self.joint(0, 1.1, -0.0, 0.0)
         self.gripper_move(-1.0)
-        self.joint(joint_diff=[0, -0.8, 0.0, 0.0])
+        self.joint(0, -0.8, 0.0, 0.0)
         self.set_next_state("halt")
         return
 
@@ -258,7 +258,7 @@ class RobotOperator():
             return
 
         if(self.grip_condition_check()):
-            self.set_next_state("act_gripper")
+            self.set_next_state("act_grip")
             self.gripper_execute()
             return
         else:
