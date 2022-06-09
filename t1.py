@@ -109,6 +109,7 @@ class RobotOperator:
             time.sleep(5)  # 팔 꺾기까지 딜레이 줘서 그 전에 값 읽는 것 방지
         arm.go([0, 0, 0, 0], wait=True)
         rospy.sleep(sleep_time)
+        time.sleep(5)
         if gripper.get_current_joint_values() < 1.2:
             self.gripper_move(1.5)
             rospy.sleep(sleep_time)
