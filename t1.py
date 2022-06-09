@@ -277,6 +277,7 @@ class RobotOperator:
         self.twist.linear.x = 0.02
         self.pub.publish(self.twist)
         time.sleep(25)
+        self.robot_halt()
         print('[find_target] Find bottle routine at 0.5m')
         self.turn_left_120deg()
         self.find_target_when_right_turn_240deg()
