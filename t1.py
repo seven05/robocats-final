@@ -173,7 +173,7 @@ class RobotOperator():
             self.current_state = "halt"
 
     def rotate_previous_direction(self):
-        self.twist.angular.z = 0.05 * self.before_direction
+        self.twist.angular.z = 0.1 * self.before_direction
         self.pub.publish(self.twist)
         return
 
