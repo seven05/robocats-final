@@ -95,11 +95,19 @@ class RobotOperator():
 
         joint_values = arm.get_current_joint_values()
         chk = False
+        for j in range(4):
+            if(0.1 < joint_values[j] <= 0.6):
+                chk = True
+                joint_values[j] = 1.2
+            if(-0.6 <= joint_values[j] < 0.1):
+                chk = True
+                joint_values[j] = -1.2
+        if(chk):
+            arm.go(joint_value,wait=True)
+            rospy.sleep(sleep_time)
+        chk = False
         for i in range(4):
             if(abs(joint_values[i]) > 0.6):
-                chk = True
-                joint_values[i] = 0.0
-            if(abs(joint_values[i]) > 0.1 and abs(joint_values[i] <= 0.6)):
                 chk = True
                 joint_values[i] = 0.0
         if(chk):
