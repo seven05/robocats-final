@@ -51,6 +51,7 @@ class RobotOperator:
         self.current_state = 'decide'
         self.robot_state = ['decide', 'act_find', 'act_approach', 'act_grip', 'halt']
         self.need_default_direction = False
+        self.now_move_default_direction = False
 
         self.find_criterion = 'yolo'
 
@@ -135,6 +136,7 @@ class RobotOperator:
             print('[move_default_direction_callback] direction process done')
             self.robot_halt()
             self.need_default_direction = False  # 완료되었으므로 더이상 실행하지 않음
+            self.now_move_default_direction = False
         self.pub.publish(self.twist)
         time.sleep(0.01)
 
@@ -215,12 +217,15 @@ class RobotOperator:
         flag를 True로 변경해서 move_default_direction_callback()이 실행되도록 함
         """
         self.need_default_direction = True
+        self.now_move_default_direction = True
 
     def find_target(self):
         # current state : act_find
         if self.current_state != 'act_find':
             print('ERROR : state is wrong, not act find, ', self.current_state)
         self.move_default_direction()
+        while self.now_move_default_direction:
+            time.sleep(0.01)
         self.rotate_previous_direction()
         while self.yolo_data is None:
             pass
