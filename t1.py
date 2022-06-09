@@ -218,14 +218,16 @@ class RobotOperator:
         """
         self.need_default_direction = True
         self.now_move_default_direction = True
+        # move_default_direction_callback()이 종료되면 self.now_move_default_direction flag가 False로 바뀜
+        # 코드가 동기적으로 돌아야하므로 종료될 때 까지 loop 돌림
+        while self.now_move_default_direction:
+            time.sleep(0.01)
 
     def find_target(self):
         # current state : act_find
         if self.current_state != 'act_find':
             print('ERROR : state is wrong, not act find, ', self.current_state)
         self.move_default_direction()
-        while self.now_move_default_direction:
-            time.sleep(0.01)
         self.rotate_previous_direction()
         while self.yolo_data is None:
             pass
