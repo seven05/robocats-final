@@ -312,15 +312,22 @@ class RobotOperator:
         if self.turn_deg('left', 75):
             self.found_target_routine()
             return
-        self.forward_meter(0.7)
+        self.forward_meter(0.8)
         print('[find_target] Find bottle routine in step 3')
         if self.turn_deg('right', 90) or self.turn_deg('left', 180):  # 앞 루틴 True이면 뒤 루틴 실행 안함
             self.found_target_routine()
             return
 
         # Find step #4
-        self.forward_meter(0.7)
-        print('[find_target] Find bottle routine in step 3')
+        self.forward_meter(0.8)
+        print('[find_target] Find bottle routine in step 4')
+        if self.turn_deg('right', 90) or self.turn_deg('left', 180):  # 앞 루틴 True이면 뒤 루틴 실행 안함
+            self.found_target_routine()
+            return
+
+        # Find step #5
+        self.forward_meter(0.8)
+        print('[find_target] Find bottle routine in step 5')
         if self.turn_deg('right', 90) or self.turn_deg('left', 180):  # 앞 루틴 True이면 뒤 루틴 실행 안함
             self.found_target_routine()
             return
