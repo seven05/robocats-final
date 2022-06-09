@@ -192,8 +192,12 @@ class RobotOperator():
         coordinates_criterion = None
 
         if self.lidar_data is None:  # If cannot read lidar sensor value, pass
-            print('match direction paused because lidar sensor value is None')
-            return
+            print('match_direction sleep 0.1sec because lidar sensor value is None')
+            time.sleep(0.1)
+            if self.lidar_data is None:
+                print('match_direction **paused** because lidar sensor value is None')
+                self.robot_halt()
+                return
 
         if self.lidar_data >= self.yolo_threshold:
             coordinates_criterion = self.yolo_data
@@ -227,8 +231,11 @@ class RobotOperator():
         print("approach")
         while True:
             if self.lidar_data is None:
-                print('approach paused because lidar sensor value is None')
-                self.robot_halt()
+                print('approach sleep 0.1sec because lidar sensor value is None')
+                time.sleep(0.1)
+                if self.lidar_data is None:
+                    print('approach **paused** because lidar sensor value is None')
+                    self.robot_halt()
                 continue
             self.match_direction()
             self.go_front()
