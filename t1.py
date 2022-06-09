@@ -95,15 +95,15 @@ class RobotOperator():
 
         joint_values = arm.get_current_joint_values()
         chk = False
-        for j in range(4):
-            if(0.1 < joint_values[j] <= 0.6):
+        joint_sign_map = [1, -1, 1, -1]
+        for joint_idx, join_sign in enumerate(joint_sign_map):
+            if(abs(joint_values[joint_idx]) < 0.6):
                 chk = True
-                joint_values[j] = 1.2
-            if(-0.6 <= joint_values[j] < 0.1):
-                chk = True
-                joint_values[j] = -1.2
+                joint_values[joint_idx] = 1.2 * joint_sign
+            else:
+                joint_value[joint_idx] = 0
         if(chk):
-            arm.go(joint_value,wait=True)
+            arm.go(joint_value, wait=True)
             rospy.sleep(sleep_time)
         chk = False
         for i in range(4):
@@ -111,7 +111,7 @@ class RobotOperator():
                 chk = True
                 joint_values[i] = 0.0
         if(chk):
-            arm.go(joint_values,wait=True)
+            arm.go(joint_values, wait=True)
             rospy.sleep(sleep_time)
         if(gripper.get_current_joint_values() < 1.2):
             self.gripper_move(1.5)
