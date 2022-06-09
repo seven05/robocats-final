@@ -95,14 +95,22 @@ class RobotOperator():
 
         joint_values = arm.get_current_joint_values()
         chk = False
-        for i in range(4):
-            if(abs(joint_values[i]) > 0.5):
+        joint_sign_map = [1, -1, 1, -1]
+        for joint_idx, joint_sign in enumerate(joint_sign_map):
+            if(abs(joint_values[joint_idx]) < 0.6):
                 chk = True
-                joint_values[i] = 0.0
+                joint_values[joint_idx] = 1.2 * joint_sign
+            else:
+                joint_values[joint_idx] = 0
         if(chk):
-            arm.go(joint_values,wait=True)
+            arm.go(joint_values, wait=True)
             rospy.sleep(sleep_time)
-        self.gripper_move(1.5)
+            time.sleep(5)  # 팔 꺾기까지 딜레이 줘서 그 전에 값 읽는 것 방지
+        arm.go([0, 0, 0, 0], wait=True)
+        rospy.sleep(sleep_time)
+        if(gripper.get_current_joint_values() < 1.2):
+            self.gripper_move(1.5)
+            rospy.sleep(sleep_time)
 
     def subscribe(self):
         rospy.init_node('RobotOperator', anonymous=True)
@@ -110,6 +118,11 @@ class RobotOperator():
         rospy.Subscriber('/scan_heading', Float32, self.lidar_callback)
         rospy.Subscriber('/video_source/raw_2', Image, self.color_callback)
 
+<<<<<<< HEAD
+=======
+        self.reset_grip()
+
+>>>>>>> jwb_task1
         self.current_state = "decide"
 
         while(self.current_state != "halt"):
@@ -211,7 +224,7 @@ class RobotOperator():
         if abs(move) < 0.1:
             self.twist.angular.z = 0
         else:
-            self.twist.angular.z = move / abs(move) * 0.1
+            self.twist.angular.z = move / abs(move) * 0.05
 
         self.before_direction = -1 if move < 0 else 1
         self.pub.publish(self.twist)
