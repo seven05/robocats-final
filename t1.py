@@ -164,14 +164,16 @@ class RobotOperator:
 
         if len(bottle_boxes) == 0:
             self.yolo_data = None
-            self.recent_yolo_data_time = None
             return
 
         # 너무 작은 bottle은 인식하지 않도록 함
         bottle_center_xs = [(each.xmin + each.xmax) // 2 for each in bottle_boxes if (each.xmax - each.xmax) > 68 and (each.ymax - each.ymin) > 204]
-        # -1: far right / 0: far left
-        self.yolo_data = sorted(bottle_center_xs)[-1]
-        self.recent_yolo_data_time = time.time()
+        if len(bottle_center_xs) > 0:  # 필터링되어 list size = 0이 되면 못찾은걸로 인식함
+            # -1: far right / 0: far left
+            self.yolo_data = sorted(bottle_center_xs)[-1]
+        else:
+            self.yolo_data = None
+            return
 
     def lidar_callback(self, data):
         self.lidar_data = data.data
