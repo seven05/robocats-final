@@ -96,13 +96,18 @@ class RobotOperator():
         joint_values = arm.get_current_joint_values()
         chk = False
         for i in range(4):
-            if(abs(joint_values[i]) > 0.5):
+            if(abs(joint_values[i]) > 0.6):
+                chk = True
+                joint_values[i] = 0.0
+            if(abs(joint_values[i]) > 0.1 and abs(joint_values[i] <= 0.6)):
                 chk = True
                 joint_values[i] = 0.0
         if(chk):
             arm.go(joint_values,wait=True)
             rospy.sleep(sleep_time)
-        self.gripper_move(1.5)
+        if(gripper.get_current_joint_values() < 1.2):
+            self.gripper_move(1.5)
+            rospy.sleep(sleep_time)
 
     def subscribe(self):
         rospy.init_node('RobotOperator', anonymous=True)
