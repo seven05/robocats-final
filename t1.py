@@ -46,8 +46,6 @@ class RobotOperator():
         self.color_threshold = 0.3
         self.yolo_data = None
         self.lidar_data = None
-        self.before_lidar_data = None
-        self.is_lidar_none = False
         self.color_data = None
         self.current_state = "decide"
         self.robot_state = ["decide", "act_find", "act_approach", "act_grip", "halt"]
@@ -137,7 +135,6 @@ class RobotOperator():
         self.yolo_data = sorted(bottle_center_xs)[-1]
 
     def lidar_callback(self, data):
-        self.before_lidar_data = self.lidar_data
         self.lidar_data = data.data
 
     def color_callback(self,data):
@@ -195,15 +192,8 @@ class RobotOperator():
         coordinates_criterion = None
 
         if self.lidar_data is None:  # If cannot read lidar sensor value, pass
-            if self.is_lidar_none:
-                print('match direction paused because lidar sensor value is None')
-                return
-            else:
-                print('match direction with before lidar distance because lidar sensor value is None')
-                self.is_lidar_none = True
-                self.lidar_data = self.before_lidar_data  # TODO: FIXME:
-        else:
-            self.is_lidar_none = False
+            print('match direction paused because lidar sensor value is None')
+            return
 
         if self.lidar_data >= self.yolo_threshold:
             coordinates_criterion = self.yolo_data
@@ -237,16 +227,9 @@ class RobotOperator():
         print("approach")
         while True:
             if self.lidar_data is None:
-                if self.is_lidar_none:
-                    print('approach paused because lidar sensor value is None')
-                    self.robot_halt()
-                    continue
-                else:
-                    print('match direction with before lidar distance because lidar sensor value is None')
-                    self.is_lidar_none = True
-                    self.lidar_data = self.before_lidar_data
-            else:
-                self.is_lidar_none = False
+                print('approach paused because lidar sensor value is None')
+                self.robot_halt()
+                continue
             self.match_direction()
             self.go_front()
             time.sleep(0.01)
