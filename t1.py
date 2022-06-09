@@ -104,12 +104,12 @@ class RobotOperator():
         rospy.Subscriber('/darknet_ros/bounding_boxes', BoundingBoxes, self.yolo_callback)
         rospy.Subscriber('/scan_heading', Float32, self.lidar_callback)
         rospy.Subscriber('/video_source/raw_2', Image, self.color_callback)
-        
+
         self.current_state = "decide"
-        
+
         while(self.current_state != "halt"):
             self.run_proc()
-            
+
         self.robot_halt()
         #TODO : Add lidar callback, color filter callback
         rospy.spin()
@@ -163,7 +163,7 @@ class RobotOperator():
                 self.current_state = next_act
             else:
                 print("Error in set_next_state")
-            
+
         elif (self.current_state == "act_find" or self.current_state == "act_approach"):
             self.current_state = "sense_yolo"
         elif (self.current_state == "act_grip"):
@@ -184,6 +184,10 @@ class RobotOperator():
 
     def match_direction(self):
         coordinates_criterion = None
+
+        if self.lidar_data is None:  # If cannot read lidar sensor value, pass
+            print('match direction paused because lidar sensor value is None')
+            return
 
         if self.lidar_data >= self.yolo_threshold:
             coordinates_criterion = self.yolo_data
@@ -208,9 +212,15 @@ class RobotOperator():
         self.pub.publish(self.twist)
 
     def approach(self):
-        while(self.lidar_data >= self.color_threshold):
+        while True:
+            if self.lidar_data is None:
+                print('approach paused because lidar sensor value is None')
+                self.robot_halt()
+                continue
             self.match_direction()
             self.go_front()
+            if self.lidar_data >= self.color_threshold:
+                break
         self.robot_halt()
         self.set_next_state("decide")
         pass
@@ -233,7 +243,9 @@ class RobotOperator():
         return
 
     def grip_condition_check(self):
-        return self.lidar_data <= self.color_threshold
+        if self.lidar_data is None:
+            print('grip condition return False because lidar sensor value is None')
+        return self.lidar_data is not None and self.lidar_data <= self.color_threshold
 
     def sensor_init(self):
         self.yolo_data = None
