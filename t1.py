@@ -101,9 +101,9 @@ class RobotOperator():
                 chk = True
                 joint_values[joint_idx] = 1.2 * joint_sign
             else:
-                joint_value[joint_idx] = 0
+                joint_values[joint_idx] = 0
         if(chk):
-            arm.go(joint_value, wait=True)
+            arm.go(joint_values, wait=True)
             rospy.sleep(sleep_time)
         chk = False
         for i in range(4):
