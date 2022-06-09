@@ -254,6 +254,7 @@ class RobotOperator:
             time.sleep(0.005)
         else:
             print('[Turn right %f deg] Cannot found bottle using YOLO' % (degree,))
+        self.robot_halt()
         return find_yolo
 
     def forward_meter(self, meter):
