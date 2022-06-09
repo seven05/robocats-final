@@ -261,6 +261,12 @@ class RobotOperator:
         self.pub.publish(self.twist)
         print('Turn right 240 deg -> done')
 
+    def found_target_routine(self):
+        """find_target()에서 bottle을 찾았을 때 실행할 루틴
+        """
+        self.robot_halt()
+        self.set_next_state('decide')
+
     def find_target(self):
         # current state : act_find
         if self.current_state != 'act_find':
@@ -273,6 +279,10 @@ class RobotOperator:
         self.find_target_when_right_turn_240deg()
         print('[find_target] Reset position because not found')
         self.move_default_direction()
+        if self.yolo_data is not None:
+            self.found_target_routine()
+            return
+
         print('[find_target] go forward 0.5m')
         self.twist.linear.x = 0.02
         self.pub.publish(self.twist)
@@ -281,9 +291,9 @@ class RobotOperator:
         print('[find_target] Find bottle routine at 0.5m')
         self.turn_left_120deg()
         self.find_target_when_right_turn_240deg()
-        self.robot_halt()
-        self.set_next_state('decide')
-        return
+        if self.yolo_data is not None:
+            self.found_target_routine()
+            return
 
     def match_direction(self):
         coordinates_criterion = None
