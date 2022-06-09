@@ -227,12 +227,12 @@ class RobotOperator:
     def turn_left_120deg(self):
         """왼쪽(+ direction)으로 120도 이동
         120deg = 2.0944rad
-        0.1rad/s로 이동하므로 20.94초 동안 동작하도록 함
+        0.2rad/s로 이동하므로 2.0944/0.2초 동안 동작하도록 함
         """
         print('Turn left 120 deg')
-        self.twist.angular.z = 0.1
+        self.twist.angular.z = 0.2
         self.pub.publish(self.twist)
-        time.sleep(20.94)
+        time.sleep(2.0944 / abs(self.twist.angular.z))
         print('Turn left 120 deg -> done')
         self.twist.angular.z = 0
         self.pub.publish(self.twist)
@@ -241,15 +241,16 @@ class RobotOperator:
     def find_target_when_right_turn_240deg(self):
         """오른쪽(- direction)으로 240도를 이동하는 동안 bottle yolo를 찾음
         240deg = 4.18879rad
-        0.1rad/s로 이동하므로 41.89초 동안 동쟉하도록 함
+        0.2rad/s로 이동하므로 4.18879/0.2초 동안 동쟉하도록 함
         """
         print('Turn right 240 deg')
         start_searching_time = time.time()
 
-        self.twist.angular.z = -0.1
+        self.twist.angular.z = -0.2
+        target_turn_time = 4.18879 / abs(self.twist.angular.z)
         self.pub.publish(self.twist)
 
-        while time.time() - start_searching_time < 41.89:
+        while time.time() - start_searching_time < target_turn_time:
             if self.yolo_data is not None:  # yolo는 callback으로 찾으므로 데이터 조회해보면 됨
                 print('[Turn right 240 deg] Find bottle using YOLO')
                 break
