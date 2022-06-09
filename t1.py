@@ -223,14 +223,47 @@ class RobotOperator:
         while self.now_move_default_direction:
             time.sleep(0.01)
 
+    def turn_left_120deg(self):
+        """왼쪽(+ direction)으로 120도 이동
+        120deg = 2.0944rad
+        0.1rad/s로 이동하므로 20.94초 동안 동작하도록 함
+        """
+        self.twist.angular.z = 0.1
+        self.pub.publish(self.twist)
+        time.sleep(20.94)
+        self.twist.angular.z = 0
+        self.pub.publish(self.twist)
+        time.sleep(0.01)
+
+    def find_target_when_right_turn_240deg(self):
+        """오른쪽(- direction)으로 240도를 이동하는 동안 bottle yolo를 찾음
+        240deg = 4.18879rad
+        0.1rad/s로 이동하므로 41.89초 동안 동쟉하도록 함
+        """
+        start_searching_time = time.time()
+
+        self.twist.angular.z = -0.1
+        self.pub.publish(self.twist)
+
+        while time.time() - start_searching_time < 41.89:
+            if self.yolo_data is not None:  # yolo는 callback으로 찾으므로 데이터 조회해보면 됨
+                print('Find Bottle using YOLO')
+                break
+            time.sleep(0.005)
+
+        self.twist.angular.z = 0
+        self.pub.publish(self.twist)
+
     def find_target(self):
         # current state : act_find
         if self.current_state != 'act_find':
             print('ERROR : state is wrong, not act find, ', self.current_state)
         self.move_default_direction()
-        self.rotate_previous_direction()
-        while self.yolo_data is None:
-            pass
+        # self.rotate_previous_direction()
+        # while self.yolo_data is None:
+        #     pass
+        self.turn_left_120deg()
+        self.find_target_when_right_turn_240deg()
         self.robot_halt()
         self.set_next_state('decide')
         return
