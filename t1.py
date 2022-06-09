@@ -280,6 +280,27 @@ class RobotOperator:
         self.robot_halt()
         return find_yolo
 
+    def forward_heading_lidar(self, meter):
+        """heading 방향 lidar가 meter가 될 때 까지 전진
+        """
+        print('Forward headling lidar %fm' % (meter,))
+
+        self.twist.linear.x = 0.05
+        self.pub.publish(self.twist)
+
+        find_yolo = False
+
+        while self.lidar_data > meter:
+            if self.yolo_data is not None:  # yolo는 callback으로 찾으므로 데이터 조회해보면 됨
+                print('[Forward %fm] Find bottle using YOLO' % (meter,))
+                find_yolo = True
+                break
+            time.sleep(0.005)
+        else:
+            print('[Forward headling lidar %fm] Cannot found bottle using YOLO' % (meter,))
+        self.robot_halt()
+        return find_yolo
+
     def found_target_routine(self):
         """find_target()에서 bottle을 찾았을 때 실행할 루틴
         """
@@ -302,7 +323,8 @@ class RobotOperator:
         # Find step #2
         print('[find_target] Reset position because not found')
         self.move_default_direction()
-        self.forward_meter(0.5)
+        # self.forward_meter(0.5)
+        self.forward_heading_lidar(2.4)  # 시작 위치에 따라 0.5m 이동 결과가 달라지므로 최장 길이 기준으로 역산
         print('[find_target] Find bottle routine in step 2')
         if self.turn_deg('left', 120) or self.turn_deg('right', 240):  # 앞 루틴 True이면 뒤 루틴 실행 안함
             self.found_target_routine()
