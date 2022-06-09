@@ -49,12 +49,12 @@ class RobotOperator():
         self.color_data = None
         self.current_state = "decide"
         self.robot_state = ["decide", "act_find", "act_approach", "act_grip", "halt"]
-        
+
         self.find_criterion = 'yolo'
 
         self.bridge = CvBridge()
         self.image_fetch = np.zeros((1280, 720, 3))
-        
+
         gripper.go([0.015, 0.0], wait=True)
         rospy.sleep(sleep_time)
 
@@ -207,7 +207,7 @@ class RobotOperator():
         if abs(move) < 0.1:
             self.twist.angular.z = 0
         else:
-            self.twist.angular.z = move / abs(move) * 0.1
+            self.twist.angular.z = move / abs(move) * 0.05
 
         self.before_direction = -1 if move < 0 else 1
         self.pub.publish(self.twist)
@@ -256,7 +256,7 @@ class RobotOperator():
         self.color_data = None
 
     def run_proc(self):
-        
+
         if (self.current_state != "decide"):
             return
 
@@ -268,7 +268,7 @@ class RobotOperator():
 
         if (self.current_state != "decide"):
             return
-        
+
         self.chk=True
 
         if(self.grip_condition_check()):
