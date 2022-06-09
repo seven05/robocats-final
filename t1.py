@@ -104,12 +104,12 @@ class RobotOperator():
         rospy.Subscriber('/darknet_ros/bounding_boxes', BoundingBoxes, self.yolo_callback)
         rospy.Subscriber('/scan_heading', Float32, self.lidar_callback)
         rospy.Subscriber('/video_source/raw_2', Image, self.color_callback)
-        
+
         self.current_state = "decide"
-        
+
         while(self.current_state != "halt"):
             self.run_proc()
-            
+
         self.robot_halt()
         #TODO : Add lidar callback, color filter callback
         rospy.spin()
@@ -163,14 +163,14 @@ class RobotOperator():
                 self.current_state = next_act
             else:
                 print("Error in set_next_state")
-            
+
         elif (self.current_state == "act_find" or self.current_state == "act_approach"):
             self.current_state = "sense_yolo"
         elif (self.current_state == "act_grip"):
             self.current_state = "halt"
 
     def rotate_previous_direction(self):
-        self.twist.angular.z = 0.1 * self.before_direction
+        self.twist.angular.z = 0.05 * self.before_direction
         self.pub.publish(self.twist)
         return
 
