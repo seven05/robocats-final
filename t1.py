@@ -52,8 +52,6 @@ class RobotOperator:
         self.robot_state = ['decide', 'act_find', 'act_approach', 'act_grip', 'halt']
         self.need_default_direction = False
         self.now_move_default_direction = False
-        self.recent_yolo_data_time = None
-        self.recent_yolo_data_time_threshold = 1
 
         self.find_criterion = 'yolo'
 
@@ -246,11 +244,7 @@ class RobotOperator:
         find_yolo = False
 
         while time.time() - start_searching_time < target_turn_time:
-            yolo_condition = (
-                self.yolo_data is not None and self.recent_yolo_data_time is not None and
-                time.time() - self.recent_yolo_data_time >= self.recent_yolo_data_time_threshold
-            )
-            if yolo_condition:  # yolo는 callback으로 찾으므로 데이터 조회해보면 됨
+            if self.yolo_data is not None:  # yolo는 callback으로 찾으므로 데이터 조회해보면 됨
                 print('[Turn right %f deg] Find bottle using YOLO' % (degree,))
                 find_yolo = True
                 break
@@ -272,11 +266,7 @@ class RobotOperator:
         find_yolo = False
 
         while time.time() - start_searching_time < target_turn_time:
-            yolo_condition = (
-                self.yolo_data is not None and self.recent_yolo_data_time is not None and
-                time.time() - self.recent_yolo_data_time >= self.recent_yolo_data_time_threshold
-            )
-            if yolo_condition:  # yolo는 callback으로 찾으므로 데이터 조회해보면 됨
+            if self.yolo_data is not None:  # yolo는 callback으로 찾으므로 데이터 조회해보면 됨
                 print('[Forward %fm] Find bottle using YOLO' % (meter,))
                 find_yolo = True
                 break
