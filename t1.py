@@ -271,6 +271,11 @@ class RobotOperator:
         #     pass
         self.turn_left_120deg()
         self.find_target_when_right_turn_240deg()
+        print('[find_target] Reset position because not found')
+        self.move_default_direction()
+        print('[find_target] go forward')
+        self.twist.linear.x = 0.02
+        time.sleep(5)
         self.robot_halt()
         self.set_next_state('decide')
         return
