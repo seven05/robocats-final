@@ -235,7 +235,7 @@ class RobotOperator:
         """direction 방향(left: +, right: -)으로 degree만큼 이동
         """
         print('Turn %s %f deg' % (direction, degree))
-        direction_sign = '+' if direction == 'left' else '-'
+        direction_sign = 1 if direction == 'left' else -1
         turn_radian = self.deg2rad(degree)
         start_searching_time = time.time()
 
