@@ -15,6 +15,7 @@ from darknet_ros_msgs.msg import BoundingBoxes
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Image
 from std_msgs.msg import Float32, String
+from sensor_msgs.msg import LaserScan
 
 from scipy import ndimage
 
@@ -49,6 +50,7 @@ class RobotOperator:
         self.color_data = None
         self.current_state = 'decide'
         self.robot_state = ['decide', 'act_find', 'act_approach', 'act_grip', 'halt']
+        self.need_default_direction = False
 
         self.find_criterion = 'yolo'
 
@@ -110,11 +112,36 @@ class RobotOperator:
             self.gripper_move(1.5)
             rospy.sleep(sleep_time)
 
+    def move_default_direction_callback(self, data):
+        """self.need_default_direction가 True일 경우 경기장 가장 긴 대각선 방향을 바라보도록 함
+        """
+        if not self.need_default_direction:  # 필요하지 않다면 실행하지 않음
+            return
+        ranges = data.ranges
+        direction_distance_map = sorted(list(zip(list(range(len(ranges))), ranges)), key=lambda x: x[1], reverse=True)
+        direction_distance_map = [each for each in direction_distance_map if each[1] < 3.6]
+        long_direction, long_distance = direction_distance_map[0]
+        if 5 <= long_direction < 180:
+            # move left
+            print('[move_default_direction_callback] move left %5d %f'%(long_direction, long_distance))
+            self.twist.angular.z = 0.1
+        elif 180 <= long_direction < 355:
+            # move right
+            print('[move_default_direction_callback] move right %5d %f'%(long_direction, long_distance))
+            self.twist.angular.z = -0.1
+        elif long_distance < 5 or long_direction >= 355:
+            print('[move_default_direction_callback] stop %5d %f'%(long_direction, long_distance))
+            self.twist.angular.z = 0
+            self.need_default_direction = True  # 완료되었으므로 더이상 실행하지 않음
+        self.pub.publish(self.twist)
+        time.sleep(0.01)
+
     def subscribe(self):
         rospy.init_node('RobotOperator', anonymous=True)
         rospy.Subscriber('/darknet_ros/bounding_boxes', BoundingBoxes, self.yolo_callback)
         rospy.Subscriber('/scan_heading', Float32, self.lidar_callback)
         rospy.Subscriber('/video_source/raw_2', Image, self.color_callback)
+        rospy.Subscriber('/scan', LaserScan, self.move_default_direction_callback)
         self.reset_grip()
         self.current_state = 'decide'
 
@@ -180,10 +207,18 @@ class RobotOperator:
         self.pub.publish(self.twist)
         return
 
+    def move_default_direction(self):
+        """경기장에서 가장 긴 (but, 3.6m 이내인) 방향을 바라보도록 함
+
+        flag를 True로 변경해서 move_default_direction_callback()이 실행되도록 함
+        """
+        self.need_default_direction = True
+
     def find_target(self):
         # current state : act_find
         if self.current_state != 'act_find':
             print('ERROR : state is wrong, not act find, ', self.current_state)
+        self.move_default_direction()
         self.rotate_previous_direction()
         while self.yolo_data is None:
             pass
