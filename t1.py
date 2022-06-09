@@ -229,9 +229,11 @@ class RobotOperator:
         120deg = 2.0944rad
         0.1rad/s로 이동하므로 20.94초 동안 동작하도록 함
         """
+        print('Turn left 120 deg')
         self.twist.angular.z = 0.1
         self.pub.publish(self.twist)
         time.sleep(20.94)
+        print('Turn left 120 deg -> done')
         self.twist.angular.z = 0
         self.pub.publish(self.twist)
         time.sleep(0.01)
@@ -241,6 +243,7 @@ class RobotOperator:
         240deg = 4.18879rad
         0.1rad/s로 이동하므로 41.89초 동안 동쟉하도록 함
         """
+        print('Turn right 240 deg')
         start_searching_time = time.time()
 
         self.twist.angular.z = -0.1
@@ -248,12 +251,15 @@ class RobotOperator:
 
         while time.time() - start_searching_time < 41.89:
             if self.yolo_data is not None:  # yolo는 callback으로 찾으므로 데이터 조회해보면 됨
-                print('Find Bottle using YOLO')
+                print('[Turn right 240 deg] Find bottle using YOLO')
                 break
             time.sleep(0.005)
+        else:
+            print('[Turn right 240 deg] Cannot found bottle using YOLO')
 
         self.twist.angular.z = 0
         self.pub.publish(self.twist)
+        print('Turn right 240 deg -> done')
 
     def find_target(self):
         # current state : act_find
