@@ -40,23 +40,28 @@ class RobotOperator():
 
         self.pub = rospy.Publisher('cmd_vel', Twist, queue_size=20)
 
+        self.chk = False
         self.before_direction = 1
         self.yolo_threshold = 0.70
-        self.color_threshold = 0.33
+        self.color_threshold = 0.3
         self.yolo_data = None
         self.lidar_data = None
         self.color_data = None
         self.current_state = "decide"
-        self.robot_state = ["sense_yolo", "sense_lidar", "sense_color",
-                            "decide", "act_find", "act_approach", "act_grip", "halt"]
+        self.robot_state = ["decide", "act_find", "act_approach", "act_grip", "halt"]
+        
+        self.find_criterion = 'yolo'
 
         self.bridge = CvBridge()
         self.image_fetch = np.zeros((1280, 720, 3))
+        
+        gripper.go([0.015, 0.0], wait=True)
+        rospy.sleep(sleep_time)
 
 
-    def joint(joint_diff=[0,0,0,0]):
+    def joint(self,joint1,joint2,joint3,joint4):
         global arm, sleep_time
-
+        joint_diff = [joint1,joint2,joint3,joint4]
         joint_values = arm.get_current_joint_values()
         rospy.sleep(sleep_time)
         print (joint_values)
@@ -117,7 +122,6 @@ class RobotOperator():
     def yolo_callback(self, data):
         """Return x coordinates of center of box which is bottle on the **far right**
         """
-        # assert (self.current_state == "sense")
         bottle_boxes = [
             each for each in data.bounding_boxes if each.Class == 'bottle']
 
@@ -131,7 +135,6 @@ class RobotOperator():
         self.yolo_data = sorted(bottle_center_xs)[-1]
 
     def lidar_callback(self, data):
-        # assert(self.current_state == "senser")
         self.lidar_data = data.data
 
     def color_callback(self,data):
@@ -165,7 +168,7 @@ class RobotOperator():
                 print("Error in set_next_state")
 
         elif (self.current_state == "act_find" or self.current_state == "act_approach"):
-            self.current_state = "sense_yolo"
+            self.current_state = "decide"
         elif (self.current_state == "act_grip"):
             self.current_state = "halt"
 
@@ -176,8 +179,11 @@ class RobotOperator():
 
     def find_target(self):
         # current state : act_find
+        if(self.current_state != "act_find"):
+            print("ERROR : state is wrong, not act find, ",self.current_state)
+        self.rotate_previous_direction()
         while(self.yolo_data is None):
-            self.rotate_previous_direction()
+            pass
         self.robot_halt()
         self.set_next_state("decide")
         return
@@ -188,6 +194,9 @@ class RobotOperator():
         if self.lidar_data >= self.yolo_threshold:
             coordinates_criterion = self.yolo_data
         elif self.lidar_data >= self.color_threshold:
+            if self.find_criterion == 'yolo':
+                print('Change find criterion: yolo -> color')
+                self.find_criterion = 'color'
             coordinates_criterion = self.color_data and self.color_data[0]
 
         if coordinates_criterion is None:
@@ -195,40 +204,46 @@ class RobotOperator():
 
         move = float(640 - coordinates_criterion) / 640
 
-        if abs(move) < 0.15:
+        if abs(move) < 0.1:
             self.twist.angular.z = 0
         else:
-            self.twist.angular.z = move * 0.5
+            self.twist.angular.z = move / abs(move) * 0.1
 
         self.before_direction = -1 if move < 0 else 1
         self.pub.publish(self.twist)
+        #print("match_direction published")
 
     def go_front(self):
         self.twist.linear.x = 0.02
         self.pub.publish(self.twist)
 
     def approach(self):
+        print("approach")
         while(self.lidar_data >= self.color_threshold):
             self.match_direction()
             self.go_front()
+            time.sleep(0.01)
         self.robot_halt()
         self.set_next_state("decide")
         pass
 
-    def gripper(self):
-        self.joint(joint_diff=[0, 0.0, -0.8, 0.0])
-        self.joint(joint_diff=[0, 1.1, -0.0, 0.0])
+    def gripper_execute(self):
+        print("gripper_execute called")
+        self.joint(0, 0.0, -0.8, 0.0)
+        self.joint(0, 1.1, -0.0, 0.0)
         self.gripper_move(-1.0)
-        self.joint(joint_diff=[0, -0.8, 0.0, 0.0])
+        self.joint(0, -0.8, 0.0, 0.0)
         self.set_next_state("halt")
         return
 
     def robot_halt(self):
+        print("robot_halt")
         self.twist.linear.x = 0.0
         self.twist.linear.y = 0.0
         self.twist.linear.z = 0.0
         self.twist.angular.x = 0.0
         self.twist.angular.y = 0.0
+        self.twist.angular.z = 0.0
         self.pub.publish(self.twist)
         return
 
@@ -241,11 +256,11 @@ class RobotOperator():
         self.color_data = None
 
     def run_proc(self):
-        # current state : sense_color
+        
         if (self.current_state != "decide"):
             return
 
-        if(self.yolo_data is None):
+        if(self.yolo_data is None and self.chk == False):
             # go to next state
             self.set_next_state("act_find")
             self.find_target()
@@ -253,10 +268,12 @@ class RobotOperator():
 
         if (self.current_state != "decide"):
             return
+        
+        self.chk=True
 
         if(self.grip_condition_check()):
-            self.set_next_state("act_gripper")
-            self.gripper()
+            self.set_next_state("act_grip")
+            self.gripper_execute()
             return
         else:
             self.set_next_state("act_approach")
@@ -271,3 +288,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
