@@ -277,12 +277,12 @@ class RobotOperator:
         #     pass
         self.turn_left_120deg()
         self.find_target_when_right_turn_240deg()
-        print('[find_target] Reset position because not found')
-        self.move_default_direction()
         if self.yolo_data is not None:
             self.found_target_routine()
             return
 
+        print('[find_target] Reset position because not found')
+        self.move_default_direction()
         print('[find_target] go forward 0.5m')
         self.twist.linear.x = 0.02
         self.pub.publish(self.twist)
