@@ -167,7 +167,8 @@ class RobotOperator:
             self.recent_yolo_data_time = None
             return
 
-        bottle_center_xs = [(each.xmin + each.xmax) // 2 for each in bottle_boxes]
+        # 너무 작은 bottle은 인식하지 않도록 함
+        bottle_center_xs = [(each.xmin + each.xmax) // 2 for each in bottle_boxes if (each.xmax - each.xmax) > 68 and (each.ymax - each.ymin) > 204]
         # -1: far right / 0: far left
         self.yolo_data = sorted(bottle_center_xs)[-1]
         self.recent_yolo_data_time = time.time()
