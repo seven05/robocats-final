@@ -106,6 +106,7 @@ class RobotOperator():
             arm.go(joint_values, wait=True)
             rospy.sleep(sleep_time)
         chk = False
+        joint_values = arm.get_current_joint_values()
         for i in range(4):
             if(abs(joint_values[i]) > 0.6):
                 chk = True
