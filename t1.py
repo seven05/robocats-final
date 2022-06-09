@@ -309,26 +309,26 @@ class RobotOperator:
             return
 
         # Find step #3
-        if self.turn_deg('left', 75):
+        if self.turn_deg('left', 85):  # 75 deg, but bias calibrated degree
             self.found_target_routine()
             return
-        self.forward_meter(0.8)
+        self.forward_meter(0.9)
         print('[find_target] Find bottle routine in step 3')
-        if self.turn_deg('right', 90) or self.turn_deg('left', 180):  # 앞 루틴 True이면 뒤 루틴 실행 안함
+        if self.turn_deg('right', 90) or self.turn_deg('left', 190):  # 앞 루틴 True이면 뒤 루틴 실행 안함, calibrated 180 deg
             self.found_target_routine()
             return
 
         # Find step #4
-        self.forward_meter(0.8)
+        self.forward_meter(0.9)
         print('[find_target] Find bottle routine in step 4')
-        if self.turn_deg('right', 90) or self.turn_deg('left', 180):  # 앞 루틴 True이면 뒤 루틴 실행 안함
+        if self.turn_deg('right', 90) or self.turn_deg('left', 190):  # 앞 루틴 True이면 뒤 루틴 실행 안함, calibrated 180 deg
             self.found_target_routine()
             return
 
         # Find step #5
-        self.forward_meter(0.8)
+        self.forward_meter(0.9)
         print('[find_target] Find bottle routine in step 5')
-        if self.turn_deg('right', 90) or self.turn_deg('left', 180):  # 앞 루틴 True이면 뒤 루틴 실행 안함
+        if self.turn_deg('right', 90) or self.turn_deg('left', 190):  # 앞 루틴 True이면 뒤 루틴 실행 안함, calibrated 180 deg
             self.found_target_routine()
             return
 
