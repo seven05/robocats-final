@@ -123,6 +123,8 @@ class RobotOperator():
         rospy.Subscriber('/scan_heading', Float32, self.lidar_callback)
         rospy.Subscriber('/video_source/raw_2', Image, self.color_callback)
 
+        self.reset_grip()
+
         self.current_state = "decide"
 
         while(self.current_state != "halt"):
