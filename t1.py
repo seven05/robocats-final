@@ -273,9 +273,13 @@ class RobotOperator:
         self.find_target_when_right_turn_240deg()
         print('[find_target] Reset position because not found')
         self.move_default_direction()
-        print('[find_target] go forward')
+        print('[find_target] go forward 0.5m')
         self.twist.linear.x = 0.02
-        time.sleep(5)
+        self.pub.publish(self.twist)
+        time.sleep(25)
+        print('[find_target] Find bottle routine at 0.5m')
+        self.turn_left_120deg()
+        self.find_target_when_right_turn_240deg()
         self.robot_halt()
         self.set_next_state('decide')
         return
