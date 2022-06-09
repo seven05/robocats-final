@@ -96,7 +96,7 @@ class RobotOperator():
         joint_values = arm.get_current_joint_values()
         chk = False
         joint_sign_map = [1, -1, 1, -1]
-        for joint_idx, join_sign in enumerate(joint_sign_map):
+        for joint_idx, joint_sign in enumerate(joint_sign_map):
             if(abs(joint_values[joint_idx]) < 0.6):
                 chk = True
                 joint_values[joint_idx] = 1.2 * joint_sign
