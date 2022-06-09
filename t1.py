@@ -280,7 +280,7 @@ class RobotOperator:
         self.robot_halt()
         return find_yolo
 
-    def forward_heading_lidar(self, meter):
+    def forward_heading_lidar(self, meter):  # TODO: FIXME: heading이 아니라 lidar 최대값 (3.6m 이하) 기준으로 접근하는 방식으로 변경 필요
         """heading 방향 lidar가 meter가 될 때 까지 전진
         """
         print('Forward headling lidar %fm' % (meter,))
