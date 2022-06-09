@@ -52,6 +52,7 @@ class RobotOperator:
         self.robot_state = ['decide', 'act_find', 'act_approach', 'act_grip', 'halt']
         self.need_default_direction = False
         self.now_move_default_direction = False
+        self.recent_yolo_data_time = None
 
         self.find_criterion = 'yolo'
 
@@ -164,11 +165,13 @@ class RobotOperator:
 
         if len(bottle_boxes) == 0:
             self.yolo_data = None
+            self.recent_yolo_data_time = None
             return
 
         bottle_center_xs = [(each.xmin + each.xmax) // 2 for each in bottle_boxes]
         # -1: far right / 0: far left
         self.yolo_data = sorted(bottle_center_xs)[-1]
+        self.recent_yolo_data_time = time.time()
 
     def lidar_callback(self, data):
         self.lidar_data = data.data
@@ -251,7 +254,11 @@ class RobotOperator:
         self.pub.publish(self.twist)
 
         while time.time() - start_searching_time < target_turn_time:
-            if self.yolo_data is not None:  # yolo는 callback으로 찾으므로 데이터 조회해보면 됨
+            yolo_condition = (
+                self.yolo_data is not None and self.recent_yolo_data_time is not None and
+                time.time() - self.recent_yolo_data_time >= 0.5
+            )
+            if yolo_condition:  # yolo는 callback으로 찾으므로 데이터 조회해보면 됨
                 print('[Turn right 240 deg] Find bottle using YOLO')
                 break
             time.sleep(0.005)
@@ -278,7 +285,12 @@ class RobotOperator:
         #     pass
         self.turn_left_120deg()
         self.find_target_when_right_turn_240deg()
-        if self.yolo_data is not None:
+
+        yolo_condition = (
+            self.yolo_data is not None and self.recent_yolo_data_time is not None and
+            time.time() - self.recent_yolo_data_time >= 0.5
+        )
+        if yolo_condition:
             self.found_target_routine()
             return
 
@@ -292,7 +304,12 @@ class RobotOperator:
         print('[find_target] Find bottle routine at 0.5m')
         self.turn_left_120deg()
         self.find_target_when_right_turn_240deg()
-        if self.yolo_data is not None:
+
+        yolo_condition = (
+            self.yolo_data is not None and self.recent_yolo_data_time is not None and
+            time.time() - self.recent_yolo_data_time >= 0.5
+        )
+        if yolo_condition:
             self.found_target_routine()
             return
 
