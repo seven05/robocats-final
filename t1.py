@@ -105,15 +105,8 @@ class RobotOperator():
         if(chk):
             arm.go(joint_values, wait=True)
             rospy.sleep(sleep_time)
-        chk = False
-        joint_values = arm.get_current_joint_values()
-        for i in range(4):
-            if(abs(joint_values[i]) > 0.6):
-                chk = True
-                joint_values[i] = 0.0
-        if(chk):
-            arm.go(joint_values, wait=True)
-            rospy.sleep(sleep_time)
+        arm.go([0, 0, 0, 0], wait=True)
+        rospy.sleep(sleep_time)
         if(gripper.get_current_joint_values() < 1.2):
             self.gripper_move(1.5)
             rospy.sleep(sleep_time)
