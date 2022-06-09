@@ -126,11 +126,11 @@ class RobotOperator:
         if 5 <= long_direction < 180:
             # move left
             print('[move_default_direction_callback] move left %5d %f'%(long_direction, long_distance))
-            self.twist.angular.z = 0.1
+            self.twist.angular.z = 0.2
         elif 180 <= long_direction < 355:
             # move right
             print('[move_default_direction_callback] move right %5d %f'%(long_direction, long_distance))
-            self.twist.angular.z = -0.1
+            self.twist.angular.z = -0.2
         elif long_distance < 5 or long_direction >= 355:
             print('[move_default_direction_callback] stop %5d %f'%(long_direction, long_distance))
             self.twist.angular.z = 0
