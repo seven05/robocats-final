@@ -132,7 +132,9 @@ class RobotOperator:
         elif long_distance < 5 or long_direction >= 355:
             print('[move_default_direction_callback] stop %5d %f'%(long_direction, long_distance))
             self.twist.angular.z = 0
-            self.need_default_direction = True  # 완료되었으므로 더이상 실행하지 않음
+            print('[move_default_direction_callback] direction process done')
+            self.robot_halt()
+            self.need_default_direction = False  # 완료되었으므로 더이상 실행하지 않음
         self.pub.publish(self.twist)
         time.sleep(0.01)
 
