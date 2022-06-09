@@ -241,6 +241,20 @@ class RobotOperator:
         self.pub.publish(self.twist)
         time.sleep(0.01)
 
+    def turn_right_90deg(self):
+        """오른쪽(- direction)으로 90도 이동
+        90deg = 1.5708rad
+        0.2rad/s로 이동하므로 1.5708/0.2초 동안 동작하도록 함
+        """
+        print('Turn right 90 deg')
+        self.twist.angular.z = -0.2
+        self.pub.publish(self.twist)
+        time.sleep(1.5708 / abs(self.twist.angular.z))
+        print('Turn right 90 deg -> done')
+        self.twist.angular.z = 0
+        self.pub.publish(self.twist)
+        time.sleep(0.01)
+
     def find_target_when_right_turn_240deg(self):
         """오른쪽(- direction)으로 240도를 이동하는 동안 bottle yolo를 찾음
         240deg = 4.18879rad
@@ -265,9 +279,33 @@ class RobotOperator:
         else:
             print('[Turn right 240 deg] Cannot found bottle using YOLO')
 
+    def find_target_when_left_turn_180deg(self):
+        """왼쪽(+ direction)으로 180도를 이동하는 동안 bottle yolo를 찾음
+        180deg = 3.14159rad
+        0.2rad/s로 이동하므로 3.14159/0.2초 동안 동쟉하도록 함
+        """
+        print('Turn left 180 deg')
+        start_searching_time = time.time()
+
+        self.twist.angular.z = 0.2
+        target_turn_time = 3.14159 / abs(self.twist.angular.z)
+        self.pub.publish(self.twist)
+
+        while time.time() - start_searching_time < target_turn_time:
+            yolo_condition = (
+                self.yolo_data is not None and self.recent_yolo_data_time is not None and
+                time.time() - self.recent_yolo_data_time >= 0.5
+            )
+            if yolo_condition:  # yolo는 callback으로 찾으므로 데이터 조회해보면 됨
+                print('[Turn left 180 deg] Find bottle using YOLO')
+                break
+            time.sleep(0.005)
+        else:
+            print('[Turn left 180 deg] Cannot found bottle using YOLO')
+
         self.twist.angular.z = 0
         self.pub.publish(self.twist)
-        print('Turn right 240 deg -> done')
+        print('Turn left 180 deg -> done')
 
     def found_target_routine(self):
         """find_target()에서 bottle을 찾았을 때 실행할 루틴
@@ -279,6 +317,7 @@ class RobotOperator:
         # current state : act_find
         if self.current_state != 'act_find':
             print('ERROR : state is wrong, not act find, ', self.current_state)
+        # Find step #1
         self.move_default_direction()
         # self.rotate_previous_direction()
         # while self.yolo_data is None:
@@ -294,6 +333,7 @@ class RobotOperator:
             self.found_target_routine()
             return
 
+        # Find step #2
         print('[find_target] Reset position because not found')
         self.move_default_direction()
         print('[find_target] go forward 0.5m')
@@ -301,9 +341,53 @@ class RobotOperator:
         self.pub.publish(self.twist)
         time.sleep(25)
         self.robot_halt()
-        print('[find_target] Find bottle routine at 0.5m')
+        print('[find_target] Find bottle routine in step 2')
         self.turn_left_120deg()
         self.find_target_when_right_turn_240deg()
+
+        yolo_condition = (
+            self.yolo_data is not None and self.recent_yolo_data_time is not None and
+            time.time() - self.recent_yolo_data_time >= 0.5
+        )
+        if yolo_condition:
+            self.found_target_routine()
+            return
+
+        # Find step #3
+        print('Turn left 75 deg')
+        self.twist.angular.z = 0.2
+        self.pub.publish(self.twist)
+        time.sleep(1.309 / abs(self.twist.angular.z))
+        print('Turn left 75 deg -> done')
+        self.twist.angular.z = 0
+        self.pub.publish(self.twist)
+        time.sleep(0.01)
+        print('[find_target] go forward 0.7m')
+        self.twist.linear.x = 0.05
+        self.pub.publish(self.twist)
+        time.sleep(14)
+        self.robot_halt()
+        print('[find_target] Find bottle routine in step 3')
+        self.turn_right_90deg()
+        self.find_target_when_left_turn_180deg()
+
+        yolo_condition = (
+            self.yolo_data is not None and self.recent_yolo_data_time is not None and
+            time.time() - self.recent_yolo_data_time >= 0.5
+        )
+        if yolo_condition:
+            self.found_target_routine()
+            return
+
+        # Find step #4
+        print('[find_target] go forward 0.7m')
+        self.twist.linear.x = 0.05
+        self.pub.publish(self.twist)
+        time.sleep(14)
+        self.robot_halt()
+        print('[find_target] Find bottle routine in step 3')
+        self.turn_right_90deg()
+        self.find_target_when_left_turn_180deg()
 
         yolo_condition = (
             self.yolo_data is not None and self.recent_yolo_data_time is not None and
