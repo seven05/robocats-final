@@ -324,7 +324,7 @@ class RobotOperator:
         print('[find_target] Reset position because not found')
         self.move_default_direction()
         # self.forward_meter(0.5)
-        self.forward_heading_lidar(2.4)  # 시작 위치에 따라 0.5m 이동 결과가 달라지므로 최장 길이 기준으로 역산
+        self.forward_heading_lidar(2.3)  # 시작 위치에 따라 0.5m 이동 결과가 달라지므로 최장 길이 기준으로 역산
         print('[find_target] Find bottle routine in step 2')
         if self.turn_deg('left', 120) or self.turn_deg('right', 240):  # 앞 루틴 True이면 뒤 루틴 실행 안함
             self.found_target_routine()
