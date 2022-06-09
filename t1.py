@@ -215,11 +215,13 @@ class RobotOperator():
 
         self.before_direction = -1 if move < 0 else 1
         self.pub.publish(self.twist)
+        time.sleep(0.01)
         #print("match_direction published")
 
     def go_front(self):
         self.twist.linear.x = 0.02
         self.pub.publish(self.twist)
+        time.sleep(0.01)
 
     def approach(self):
         print("approach")
@@ -255,6 +257,7 @@ class RobotOperator():
         self.twist.angular.y = 0.0
         self.twist.angular.z = 0.0
         self.pub.publish(self.twist)
+        time.sleep(0.01)
         return
 
     def grip_condition_check(self):
