@@ -308,6 +308,10 @@ class RobotOperator:
         self.set_next_state('decide')
 
     def find_target(self):
+        # TODO: FIXME: 빠르게 이동하면서 찾기
+        # Plan A: 처음에 좌우로 10도씩 둘러봐서 못찾으면 50cm 이동해서 둘러보고 못찾으면 또 50cm 이동해서 둘러보고
+        # Plan B: 처음부터 그냥 직진하면서 찾기 -> 속도는 빠른데 시야에서 살짝 벗어나면?
+
         # current state : act_find
         if self.current_state != 'act_find':
             print('ERROR : state is wrong, not act find, ', self.current_state)
