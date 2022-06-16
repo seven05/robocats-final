@@ -16,6 +16,8 @@ def main():
         task_id = '1_general'
     elif args.task in ('2', 't2', 'task2'):
         task_id = 2
+    elif args.task in ('2_general', 't2_general', 'task2_general'):  # 오픈된 경기장에서 bottle이 어디에 있어도 찾는 코드 but 매우 느림
+        task_id = '2_general'
     elif args.task in ('3', 't3', 'task3'):
         task_id = 3
     elif args.task in ('4', 't4', 'task4'):
