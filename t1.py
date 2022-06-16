@@ -109,13 +109,15 @@ class RobotOperator:
                 elif abs(joint_value) > need_far_threshold[joint_idx]:
                     need_far_joint.append(joint_idx)
 
-            target_joint_value = []
+            target_joint_values = []
             for joint_idx, joint_value in enumerate(joint_values):
                 if joint_idx in need_0_joint:
-                    target_joint_value.append(-joint_value)
+                    target_joint_values.append(-joint_value)
                 elif joint_idx in need_far_joint:
-                    target_joint_value.append(joint_sign_map[joint_idx] * 0.7)
-            self.joint(*target_joint_value)
+                    target_joint_values.append(joint_sign_map[joint_idx] * 0.7)
+                else:
+                    target_joint_values.append(0)
+            self.joint(*target_joint_values)
 
 
         # joint_values = arm.get_current_joint_values()
