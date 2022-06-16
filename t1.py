@@ -111,9 +111,9 @@ class RobotOperator:
                 print('[reset_grip] All joint angle smaller than threshold so, break reset grip loop')
                 break
 
+            need_0_joint = []  # 0으로 보내기 필요한 joint 확인
+            need_far_joint = []  # 멀리 보내기 필요한 joint 확인
             for joint_idx, joint_value in enumerate(joint_values):
-                need_0_joint = []  # 0으로 보내기 필요한 joint 확인
-                need_far_joint = []  # 멀리 보내기 필요한 joint 확인
                 if abs(joint_value) > 0.7:
                     need_0_joint.append(joint_idx)
                 elif abs(joint_value) > need_far_threshold[joint_idx]:
