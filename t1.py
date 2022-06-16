@@ -318,7 +318,7 @@ class RobotOperator:
             print('ERROR : state is wrong, not act find, ', self.current_state)
 
         # 주위를 둘러볼 각도 (한쪽 방향으로)
-        LOOK_AROUND_DEG = 10
+        LOOK_AROUND_DEG = 15
         TURN_ANGULAR_SPEED = 0.2
 
         # Find step #1
