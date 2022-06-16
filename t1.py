@@ -52,6 +52,7 @@ class RobotOperator:
         self.robot_state = ['decide', 'act_find', 'act_approach', 'act_grip', 'halt']
         self.need_default_direction = False
         self.now_move_default_direction = False
+        self.approach_speed = 0.02  # 접근하면서 변경되는 속도 -> yolo: 접근하면서 감소, color: 0.02 고정
 
         self.find_criterion = 'yolo'
 
@@ -381,7 +382,14 @@ class RobotOperator:
         # print("match_direction published")
 
     def go_front(self):
-        self.twist.linear.x = 0.02
+        # yolo 거리일 때 남은 거리에 따라 속도 변화
+        if self.lidar_data >= self.yolo_threshold:
+            self.approach_speed = 0.2 * self.lidar_data - 0.04  # y = 0.2x - 0.04
+        elif self.lidar_data >= self.color_threshold:
+            self.approach_speed = 0.02
+
+        # self.twist.linear.x = 0.02
+        self.twist.linear.x = self.approach_speed  #
         self.pub.publish(self.twist)
         time.sleep(0.01)
 
