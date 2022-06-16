@@ -53,6 +53,7 @@ class RobotOperator:
         self.need_default_direction = False
         self.now_move_default_direction = False
         self.approach_speed = 0.1  # 접근하면서 변경되는 속도 -> yolo: 접근하면서 감소, color: 0.02 고정
+        self.angular_calibration_value = 0.04  # 로봇이 왼쪽으로 틀어지는 현상 보정하기 위해 더해주는 값
 
         self.find_criterion = 'yolo'
 
@@ -242,7 +243,7 @@ class RobotOperator:
         start_searching_time = time.time()
 
         self.twist.angular.z = angular_speed * direction_sign
-        self.twist.angular.z += 0.05  # TODO: 직진하기 위해 적정 보정값 찾아야함
+        self.twist.angular.z += self.angular_calibration_value
         target_turn_time = turn_radian / abs(self.twist.angular.z)
         self.pub.publish(self.twist)
 
@@ -267,7 +268,7 @@ class RobotOperator:
 
         self.twist.linear.x = speed
         target_move_time = meter / abs(speed)
-        self.twist.angular.z += 0.05  # TODO: 직진하기 위해 적정 보정값 찾아야함
+        self.twist.angular.z += self.angular_calibration_value
         self.pub.publish(self.twist)
 
         find_yolo = False
