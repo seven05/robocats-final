@@ -323,60 +323,78 @@ class RobotOperator:
         # Find step #1
         # 대각 방향으로 정렬
         self.move_default_direction()
-        # 왼쪽으로 10도 오른쪽으로 20도 돌고 다시 중앙 정렬
-        if self.turn_deg('left', LOOK_AROUND_DEG, TURN_ANGULAR_SPEED) or \
+
+        command_set = (
+            # Step 1: 왼쪽으로 10도 오른쪽으로 20도 돌고 다시 중앙 정렬
+            self.turn_deg('left', LOOK_AROUND_DEG, TURN_ANGULAR_SPEED) or \
             self.turn_deg('right', LOOK_AROUND_DEG * 2, TURN_ANGULAR_SPEED) or \
-            self.turn_deg('left', LOOK_AROUND_DEG, TURN_ANGULAR_SPEED):
+            self.turn_deg('left', LOOK_AROUND_DEG, TURN_ANGULAR_SPEED) or \
+            # Step 2: 앞으로 80cm 빠르게 이동하면서 탐색
+            self.forward_meter(0.8, 0.1) or \
+            self.turn_deg('left', LOOK_AROUND_DEG, TURN_ANGULAR_SPEED) or \
+            # Step 3: 이동한 지점에서 look around 실행
+            self.turn_deg('right', LOOK_AROUND_DEG * 2, TURN_ANGULAR_SPEED) or \
+            self.turn_deg('left', LOOK_AROUND_DEG, TURN_ANGULAR_SPEED),
+        )
+
+        if command_set:
             self.found_target_routine()
             return
 
-        # Find step #2
-        # 앞으로 80cm 빠르게 이동하면서 탐색
-        if self.forward_meter(0.8, 0.1):  # TODO: speed가 적절한지 확인 필요
-            self.found_target_routine()
-            return
-
-        # Find step #3
-        # 이동한 지점에서 look around 실행
-        if self.turn_deg('left', LOOK_AROUND_DEG, TURN_ANGULAR_SPEED) or \
-            self.turn_deg('right', LOOK_AROUND_DEG * 2, TURN_ANGULAR_SPEED) or \
-            self.turn_deg('left', LOOK_AROUND_DEG, TURN_ANGULAR_SPEED):
-            self.found_target_routine()
-            return
+        # # 왼쪽으로 10도 오른쪽으로 20도 돌고 다시 중앙 정렬
+        # if self.turn_deg('left', LOOK_AROUND_DEG, TURN_ANGULAR_SPEED) or \
+        #     self.turn_deg('right', LOOK_AROUND_DEG * 2, TURN_ANGULAR_SPEED) or \
+        #     self.turn_deg('left', LOOK_AROUND_DEG, TURN_ANGULAR_SPEED):
+        #     self.found_target_routine()
+        #     return
 
         # # Find step #2
-        # print('[find_target] Reset position because not found')
-        # self.move_default_direction()
-        # # self.forward_meter(0.5)
-        # self.forward_heading_lidar(2.3)  # 시작 위치에 따라 0.5m 이동 결과가 달라지므로 최장 길이 기준으로 역산
-        # print('[find_target] Find bottle routine in step 2')
-        # if self.turn_deg('left', 120) or self.turn_deg('right', 240):  # 앞 루틴 True이면 뒤 루틴 실행 안함
+        # # 앞으로 80cm 빠르게 이동하면서 탐색
+        # if self.forward_meter(0.8, 0.1):  # TODO: speed가 적절한지 확인 필요
         #     self.found_target_routine()
         #     return
 
         # # Find step #3
-        # if self.turn_deg('left', 85):  # 75 deg, but bias calibrated degree
-        #     self.found_target_routine()
-        #     return
-        # self.forward_meter(0.9)
-        # print('[find_target] Find bottle routine in step 3')
-        # if self.turn_deg('right', 90) or self.turn_deg('left', 190):  # 앞 루틴 True이면 뒤 루틴 실행 안함, calibrated 180 deg
-        #     self.found_target_routine()
-        #     return
-
-        # # Find step #4
-        # self.forward_meter(0.9)
-        # print('[find_target] Find bottle routine in step 4')
-        # if self.turn_deg('right', 90) or self.turn_deg('left', 190):  # 앞 루틴 True이면 뒤 루틴 실행 안함, calibrated 180 deg
+        # # 이동한 지점에서 look around 실행
+        # if self.turn_deg('left', LOOK_AROUND_DEG, TURN_ANGULAR_SPEED) or \
+        #     self.turn_deg('right', LOOK_AROUND_DEG * 2, TURN_ANGULAR_SPEED) or \
+        #     self.turn_deg('left', LOOK_AROUND_DEG, TURN_ANGULAR_SPEED):
         #     self.found_target_routine()
         #     return
 
-        # # Find step #5
-        # self.forward_meter(0.9)
-        # print('[find_target] Find bottle routine in step 5')
-        # if self.turn_deg('right', 90) or self.turn_deg('left', 190):  # 앞 루틴 True이면 뒤 루틴 실행 안함, calibrated 180 deg
-        #     self.found_target_routine()
-        #     return
+        # # # Find step #2
+        # # print('[find_target] Reset position because not found')
+        # # self.move_default_direction()
+        # # # self.forward_meter(0.5)
+        # # self.forward_heading_lidar(2.3)  # 시작 위치에 따라 0.5m 이동 결과가 달라지므로 최장 길이 기준으로 역산
+        # # print('[find_target] Find bottle routine in step 2')
+        # # if self.turn_deg('left', 120) or self.turn_deg('right', 240):  # 앞 루틴 True이면 뒤 루틴 실행 안함
+        # #     self.found_target_routine()
+        # #     return
+
+        # # # Find step #3
+        # # if self.turn_deg('left', 85):  # 75 deg, but bias calibrated degree
+        # #     self.found_target_routine()
+        # #     return
+        # # self.forward_meter(0.9)
+        # # print('[find_target] Find bottle routine in step 3')
+        # # if self.turn_deg('right', 90) or self.turn_deg('left', 190):  # 앞 루틴 True이면 뒤 루틴 실행 안함, calibrated 180 deg
+        # #     self.found_target_routine()
+        # #     return
+
+        # # # Find step #4
+        # # self.forward_meter(0.9)
+        # # print('[find_target] Find bottle routine in step 4')
+        # # if self.turn_deg('right', 90) or self.turn_deg('left', 190):  # 앞 루틴 True이면 뒤 루틴 실행 안함, calibrated 180 deg
+        # #     self.found_target_routine()
+        # #     return
+
+        # # # Find step #5
+        # # self.forward_meter(0.9)
+        # # print('[find_target] Find bottle routine in step 5')
+        # # if self.turn_deg('right', 90) or self.turn_deg('left', 190):  # 앞 루틴 True이면 뒤 루틴 실행 안함, calibrated 180 deg
+        # #     self.found_target_routine()
+        # #     return
 
     def match_direction(self):
         coordinates_criterion = None
