@@ -257,19 +257,19 @@ class RobotOperator:
         self.robot_halt()
         return find_yolo
 
-    def forward_meter(self, meter):
+    def forward_meter(self, meter, speed=0.05):
         """앞으로 meter만큼 이동
         """
         print('Forward %fm' % (meter,))
         start_searching_time = time.time()
 
-        self.twist.linear.x = 0.05
-        target_turn_time = meter / abs(self.twist.linear.x)
+        self.twist.linear.x = speed
+        target_move_time = meter / abs(speed)
         self.pub.publish(self.twist)
 
         find_yolo = False
 
-        while time.time() - start_searching_time < target_turn_time:
+        while time.time() - start_searching_time < target_move_time:
             if self.yolo_data is not None:  # yolo는 callback으로 찾으므로 데이터 조회해보면 됨
                 print('[Forward %fm] Find bottle using YOLO' % (meter,))
                 find_yolo = True
