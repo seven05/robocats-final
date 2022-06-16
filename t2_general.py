@@ -300,7 +300,7 @@ class RobotOperator:
     def deg2rad(self, deg):
         return deg * np.pi / 180
 
-    def turn_deg(self, direction, degree, angular_speed=0.2):
+    def turn_deg(self, direction, degree, angular_speed=0.2, yolo_stop=True):
         """direction 방향(left: +, right: -)으로 degree만큼 이동
         """
         print('Turn %s %f deg' % (direction, degree))
@@ -319,14 +319,16 @@ class RobotOperator:
             if self.yolo_data is not None:  # yolo는 callback으로 찾으므로 데이터 조회해보면 됨
                 print('[Turn right %f deg] Find bottle using YOLO' % (degree,))
                 find_yolo = True
-                break
+                if yolo_stop:
+                    break
             time.sleep(0.005)
         else:
-            print('[Turn right %f deg] Cannot found bottle using YOLO' % (degree,))
+            if yolo_stop:
+                print('[Turn right %f deg] Cannot found bottle using YOLO' % (degree,))
         self.robot_halt()
         return find_yolo
 
-    def forward_meter(self, meter, speed=0.05):
+    def forward_meter(self, meter, speed=0.05, yolo_stop=True):
         """앞으로 meter만큼 이동
         """
         print('Forward %fm' % (meter,))
@@ -343,10 +345,12 @@ class RobotOperator:
             if self.yolo_data is not None:  # yolo는 callback으로 찾으므로 데이터 조회해보면 됨
                 print('[Forward %fm] Find bottle using YOLO' % (meter,))
                 find_yolo = True
-                break
+                if yolo_stop:
+                    break
             time.sleep(0.005)
         else:
-            print('[Forward %fm] Cannot found bottle using YOLO' % (meter,))
+            if yolo_stop:
+                print('[Forward %fm] Cannot found bottle using YOLO' % (meter,))
         self.robot_halt()
         return find_yolo
 
@@ -478,8 +482,22 @@ class RobotOperator:
         self.joint(0, 1.1, -0.0, 0.0)
         self.gripper_move(-1.0)
         self.joint(0, -0.8, 0.0, 0.0)
-        self.set_next_state('halt')
+        # self.set_next_state('halt')
+        time.sleep(5)  # 다 안들어도 상관 없음 아무튼 들기만 하면 됨
         return
+
+    def comeback_home(self):
+        self.halt()
+        angle_direction = '-' if self.first_find_yolo_x > 0 else '+'
+        turn_angle = -0.6666 * abs(self.first_find_yolo_x) + 180
+        self.turn_deg(angle_direction, turn_angle, yolo_stop=False)
+        while self.lidar_data > 0.4:
+            self.forward_meter(0.05, yolo_stop=False)
+            time.sleep(0.01)
+        # 팔 내리기
+        self.joint(0, 0.0, -0.8, 0.0)
+        self.joint(0, 1.1, -0.0, 0.0)
+        self.gripper_move(1.5)
 
     def robot_halt(self):
         print('robot_halt')
@@ -520,6 +538,8 @@ class RobotOperator:
         if self.grip_condition_check():
             self.set_next_state('act_grip')
             self.gripper_execute()
+            self.comeback_home()
+            self.set_next_state('halt')
             return
         else:
             self.set_next_state('act_approach')
