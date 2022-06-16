@@ -429,12 +429,12 @@ class RobotOperator:
         if self.lidar_data >= self.yolo_threshold:
             # y(speed) = 0.1x - 0.05
             new_approach_speed = max(min(0.1 * self.lidar_data - 0.05, 0.1), 0.02)  # speed range: 0.02 ~ 0.1
-            print('[go_front] distance=%f\tcalculated_speed=%f' % (self.lidar_data, new_approach_speed))
+            # print('[go_front] distance=%f\tcalculated_speed=%f' % (self.lidar_data, new_approach_speed))
             if new_approach_speed < self.approach_speed:
-                print('  >>> [go_front] Update approach speed: distance=%f\tbefore_spee=%f\tspeed=%f' % (self.lidar_data, self.approach_speed, new_approach_speed))
+                print('[go_front] Update approach speed: distance=%f\tbefore_spee=%f\tspeed=%f' % (self.lidar_data, self.approach_speed, new_approach_speed))
                 self.approach_speed = new_approach_speed  # 작아지는 방향으로만 update
         elif self.lidar_data >= self.color_threshold:
-            print('[go_front] Fix approach speed to 0.2 (color filter stage)')
+            # print('[go_front] Fix approach speed to 0.2 (color filter stage)')
             self.approach_speed = 0.02
 
         # self.twist.linear.x = 0.02
