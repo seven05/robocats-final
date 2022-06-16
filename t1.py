@@ -233,7 +233,6 @@ class RobotOperator:
             self.yolo_data = (target_bottle.xmin + target_bottle.xmax) // 2
             self.yolo_width = target_bottle.xmax - target_bottle.xmin
             self.yolo_height = target_bottle.ymax - target_bottle.ymin
-            print('yolo_width=%f\tyolo_height=%f'%(self.yolo_width, self.yolo_height))
         else:
             self.yolo_data = None
             self.yolo_width = None
@@ -444,7 +443,9 @@ class RobotOperator:
 
     def go_front(self):
         # approach_fix_speed_threshold 거리보다 길 때 남은 거리에 따라 속도 변화
-        if self.lidar_data >= self.approach_fix_speed_threshold:
+        if self.yolo_height > 430 and self.lidar_data >= self.approach_fix_speed_threshold:
+            self.approach_speed = 0.05
+        elif self.lidar_data >= self.approach_fix_speed_threshold:
             new_approach_speed = max(min(0.08 * self.lidar_data - 0.02, 0.1), 0.02)  # speed range: 0.02 ~ 0.1
             if new_approach_speed < self.approach_speed:
                 print('[go_front] Update approach speed: distance=%f\tbefore_spee=%f\tspeed=%f' % (self.lidar_data, self.approach_speed, new_approach_speed))
