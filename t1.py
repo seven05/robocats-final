@@ -96,33 +96,56 @@ class RobotOperator:
         """로봇팔 초기 상태로 리셋
         """
         global sleep_time
-
-        joint_values = arm.get_current_joint_values()
-        chk = False
         joint_sign_map = [1, -1, 1, -1]
-        for joint_idx, joint_sign in enumerate(joint_sign_map):
-            abs_joint_value = abs(joint_values[joint_idx])
-            print('[reset grip] rad of joint %d: %f' % (joint_idx, joint_values[joint_idx]))
-            if (joint_idx == 0 and 0.05 < abs_joint_value or joint_idx != 0 and 0.1 < abs_joint_value) and abs_joint_value < 0.6:
-                chk = True
-                joint_values[joint_idx] = 1.2 * joint_sign
-                print('  >>> [reset grip] move to: %f' % (joint_values[joint_idx],))
-            else:
-                # joint_values[joint_idx] = 0
-                pass
-        if chk:
-            arm.go(joint_values, wait=True)
-            rospy.sleep(sleep_time)
-            time.sleep(5)  # 팔 꺾기까지 딜레이 줘서 그 전에 값 읽는 것 방지
-        arm.go([0, 0, 0, 0], wait=True)
-        rospy.sleep(sleep_time)
-        time.sleep(5)
+        need_far_threshold = [0.05, 0.1, 0.1, 0.1]  # 최소값 (절대값)
+
+        for try_count in range(2):
+            joint_values = arm.get_current_joint_values()
+            for joint_idx, joint_value in enumerate(joint_values):
+                need_0_joint = []  # 0으로 보내기 필요한 joint 확인
+                need_far_joint = []  # 멀리 보내기 필요한 joint 확인
+                if abs(joint_value) > 0.7:
+                    need_0_joint.append(joint_idx)
+                elif abs(joint_value) > need_far_threshold[joint_idx]:
+                    need_far_joint.append(joint_idx)
+
+            target_joint_value = []
+            for joint_idx, joint_value in enumerate(joint_values):
+                if joint_idx in need_0_joint:
+                    target_joint_value.append(-joint_value)
+                elif joint_idx in need_far_joint:
+                    target_joint_value.append(joint_sign_map[joint_idx] * 0.7)
+            self.joint(*target_joint_value)
+
+
+        # joint_values = arm.get_current_joint_values()
+        # chk = False
+        # joint_sign_map = [1, -1, 1, -1]
+        # for joint_idx, joint_sign in enumerate(joint_sign_map):
+        #     abs_joint_value = abs(joint_values[joint_idx])
+        #     print('[reset grip] rad of joint %d: %f' % (joint_idx, joint_values[joint_idx]))
+        #     if (joint_idx == 0 and 0.05 < abs_joint_value or joint_idx != 0 and 0.1 < abs_joint_value) and abs_joint_value < 0.6:
+        #         chk = True
+        #         joint_values[joint_idx] = 1.2 * joint_sign
+        #         print('  >>> [reset grip] move to: %f' % (joint_values[joint_idx],))
+        #     else:
+        #         # joint_values[joint_idx] = 0
+        #         pass
+        # if chk:
+        #     arm.go(joint_values, wait=True)
+        #     rospy.sleep(sleep_time)
+        #     time.sleep(5)  # 팔 꺾기까지 딜레이 줘서 그 전에 값 읽는 것 방지
+        # arm.go([0, 0, 0, 0], wait=True)
+        # rospy.sleep(sleep_time)
+        # time.sleep(5)
+
         gripper_value = gripper.get_current_joint_values()[0]
         print('[reset grip] Current gripper value: %f' % (gripper_value,))
         if gripper_value < 1.2:
             print('  >>> [reset grip] gripper move to: 1.5')
             self.gripper_move(1.5)
             rospy.sleep(sleep_time)
+
         joint_values = arm.get_current_joint_values()
         return joint_values[0] < 0.05
 
