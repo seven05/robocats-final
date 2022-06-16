@@ -116,7 +116,7 @@ class RobotOperator:
         arm.go([0, 0, 0, 0], wait=True)
         rospy.sleep(sleep_time)
         time.sleep(5)
-        gripper_value = gripper.get_current_joint_values()
+        gripper_value = gripper.get_current_joint_values()[0]
         print('[reset grip] Current gripper value: %f' % (gripper_value,))
         if gripper_value < 1.2:
             print('  >>> [reset grip] gripper move to: 1.5')
