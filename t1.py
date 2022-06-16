@@ -242,6 +242,7 @@ class RobotOperator:
         start_searching_time = time.time()
 
         self.twist.angular.z = angular_speed * direction_sign
+        self.twist.angular.z += 0.05  # TODO: 직진하기 위해 적정 보정값 찾아야함
         target_turn_time = turn_radian / abs(self.twist.angular.z)
         self.pub.publish(self.twist)
 
@@ -266,6 +267,7 @@ class RobotOperator:
 
         self.twist.linear.x = speed
         target_move_time = meter / abs(speed)
+        self.twist.angular.z += 0.05  # TODO: 직진하기 위해 적정 보정값 찾아야함
         self.pub.publish(self.twist)
 
         find_yolo = False
