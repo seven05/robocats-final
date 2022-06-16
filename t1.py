@@ -102,6 +102,7 @@ class RobotOperator:
         for try_count in range(2):
             print('[reset_grip] reset grip try: %d' % (try_count + 1))
             joint_values = arm.get_current_joint_values()
+            print('[reset_grip] Read current joint values: %s' % (', '.join([str(each) for each in joint_values])))
 
             all_smaller_than_threshold = True
             for joint_idx, joint_value in enumerate(joint_values):
@@ -114,13 +115,13 @@ class RobotOperator:
             need_0_joint = []  # 0으로 보내기 필요한 joint 확인
             need_far_joint = []  # 멀리 보내기 필요한 joint 확인
             for joint_idx, joint_value in enumerate(joint_values):
-                if abs(joint_value) > 0.7:
+                if abs(joint_value) > 0.61:
                     need_0_joint.append(joint_idx)
                 elif abs(joint_value) > need_far_threshold[joint_idx]:
                     need_far_joint.append(joint_idx)
 
-            print('[reset_grip] Move joint angle to 0:', ', '.join([str(each) for each in need_0_joint]))
-            print('[reset_grip] Move joint angle to far:', ', '.join([str(each) for each in need_far_joint]))
+            print('[reset_grip] Move joint angle to 0: %s'%(', '.join([str(each) for each in need_0_joint])))
+            print('[reset_grip] Move joint angle to far: %s'%(', '.join([str(each) for each in need_far_joint])))
             target_joint_values = []
             for joint_idx, joint_value in enumerate(joint_values):
                 if joint_idx in need_0_joint:
@@ -138,6 +139,8 @@ class RobotOperator:
             print('[reset_grip] Execute joint move')
             self.joint(*target_joint_values)
             time.sleep(5)
+            joint_values = arm.get_current_joint_values()
+            print('[reset_grip] After move read current joint values: %s' % (', '.join([str(each) for each in joint_values])))
 
         gripper_value = gripper.get_current_joint_values()[0]
         print('[reset grip] Current gripper value: %f' % (gripper_value,))
