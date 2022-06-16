@@ -102,9 +102,11 @@ class RobotOperator:
         joint_sign_map = [1, -1, 1, -1]
         for joint_idx, joint_sign in enumerate(joint_sign_map):
             abs_joint_value = abs(joint_values[joint_idx])
+            print('[reset grip] rad of joint %d: %f' % (joint_idx, joint_values[joint_idx]))
             if (joint_idx == 0 and 0.05 < abs_joint_value or joint_idx != 0 and 0.1 < abs_joint_value) and abs_joint_value < 0.6:
                 chk = True
                 joint_values[joint_idx] = 1.2 * joint_sign
+                print('  >>> [reset grip] move to: %f' % (joint_values[joint_idx],))
             else:
                 joint_values[joint_idx] = 0
         if chk:
