@@ -319,6 +319,7 @@ class RobotOperator:
 
         # 주위를 둘러볼 각도 (한쪽 방향으로)
         LOOK_AROUND_DEG = 15
+        LOOK_AROUND_DEG_2 = 30
         TURN_ANGULAR_SPEED = 0.2
 
         # Find step #1
@@ -338,10 +339,10 @@ class RobotOperator:
             self.turn_deg('left', LOOK_AROUND_DEG, TURN_ANGULAR_SPEED) or \
             # Step 4: 앞으로 80cm 빠르게 이동하면서 탐색
             self.forward_meter(0.8, 0.1) or \
-            self.turn_deg('left', LOOK_AROUND_DEG, TURN_ANGULAR_SPEED) or \
             # Step 5: 이동한 지점에서 look around 실행
-            self.turn_deg('right', LOOK_AROUND_DEG * 2, TURN_ANGULAR_SPEED) or \
-            self.turn_deg('left', LOOK_AROUND_DEG, TURN_ANGULAR_SPEED)
+            self.turn_deg('left', LOOK_AROUND_DEG_2, TURN_ANGULAR_SPEED) or \
+            self.turn_deg('right', LOOK_AROUND_DEG_2 * 2, TURN_ANGULAR_SPEED) or \
+            self.turn_deg('left', LOOK_AROUND_DEG_2, TURN_ANGULAR_SPEED)
         )
 
         if command_set:
