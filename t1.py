@@ -444,6 +444,7 @@ class RobotOperator:
     def go_front(self):
         # approach_fix_speed_threshold 거리보다 길 때 남은 거리에 따라 속도 변화
         if self.yolo_height > 430 and self.lidar_data >= self.approach_fix_speed_threshold:
+            print('[go_front] set approach speed to 0.05 because, yolo height (%f) is bigger than 430' % (self.yolo_height,))
             self.approach_speed = 0.05
         elif self.lidar_data >= self.approach_fix_speed_threshold:
             new_approach_speed = max(min(0.08 * self.lidar_data - 0.02, 0.1), 0.02)  # speed range: 0.02 ~ 0.1
