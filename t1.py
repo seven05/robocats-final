@@ -137,6 +137,7 @@ class RobotOperator:
 
             print('[reset_grip] Execute joint move')
             self.joint(*target_joint_values)
+            time.sleep(5)
 
         gripper_value = gripper.get_current_joint_values()[0]
         print('[reset grip] Current gripper value: %f' % (gripper_value,))
