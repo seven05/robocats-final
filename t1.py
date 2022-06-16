@@ -101,6 +101,14 @@ class RobotOperator:
 
         for try_count in range(2):
             joint_values = arm.get_current_joint_values()
+
+            all_smaller_than_threshold = True
+            for joint_idx, joint_value in enumerate(joint_values):
+                if abs(joint_value) >= need_far_threshold[joint_idx]:
+                    all_smaller_than_threshold = False
+            if all_smaller_than_threshold:
+                break
+
             for joint_idx, joint_value in enumerate(joint_values):
                 need_0_joint = []  # 0으로 보내기 필요한 joint 확인
                 need_far_joint = []  # 멀리 보내기 필요한 joint 확인
