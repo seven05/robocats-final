@@ -309,7 +309,7 @@ class RobotOperator:
 
     def find_target(self):
         # TODO: FIXME: 빠르게 이동하면서 찾기
-        # Plan A: 처음에 좌우로 10도씩 둘러봐서 못찾으면 50cm 이동해서 둘러보고 못찾으면 또 50cm 이동해서 둘러보고
+        # Plan A: 처음에 좌우로 10도씩 둘러봐서 못찾으면 80cm 이동해서 둘러보고 못찾으면 또 80cm 이동해서 둘러보고
         # Plan B: 처음부터 그냥 직진하면서 찾기 -> 속도는 빠른데 시야에서 살짝 벗어나면?
 
         # current state : act_find
@@ -323,6 +323,19 @@ class RobotOperator:
         # 대각 방향으로 정렬
         self.move_default_direction()
         # 왼쪽으로 10도 오른쪽으로 20도 돌고 다시 중앙 정렬
+        if self.turn_deg('left', LOOK_AROUND_DEG) or self.turn_deg('right', LOOK_AROUND_DEG * 2) or \
+            self.turn_deg('left', LOOK_AROUND_DEG):
+            self.found_target_routine()
+            return
+
+        # Find step #2
+        # 앞으로 80cm 빠르게 이동하면서 탐색
+        if self.forward_meter(0.8, 0.1):  # TODO: speed가 적절한지 확인 필요
+            self.found_target_routine()
+            return
+
+        # Find step #3
+        # 이동한 지점에서 look around 실행
         if self.turn_deg('left', LOOK_AROUND_DEG) or self.turn_deg('right', LOOK_AROUND_DEG * 2) or \
             self.turn_deg('left', LOOK_AROUND_DEG):
             self.found_target_routine()
