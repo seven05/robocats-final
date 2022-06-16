@@ -391,7 +391,7 @@ class RobotOperator:
             print('ERROR : state is wrong, not act find, ', self.current_state)
 
         # 주위를 둘러볼 각도 (한쪽 방향으로)
-        LOOK_AROUND_DEG = 15
+        LOOK_AROUND_DEG = 60
         LOOK_AROUND_DEG_2 = 60
         TURN_ANGULAR_SPEED = 0.2
 
@@ -400,7 +400,7 @@ class RobotOperator:
         self.move_default_direction()
 
         command_set = (
-            # Step 1: 왼쪽으로 10도 오른쪽으로 20도 돌고 다시 중앙 정렬
+            # Step 1: 왼쪽으로 60도 오른쪽으로 120도 돌고 다시 중앙 정렬
             self.turn_deg('left', LOOK_AROUND_DEG, TURN_ANGULAR_SPEED) or \
             self.turn_deg('right', LOOK_AROUND_DEG * 2, TURN_ANGULAR_SPEED) or \
             self.turn_deg('left', LOOK_AROUND_DEG, TURN_ANGULAR_SPEED) or \
