@@ -416,7 +416,8 @@ class RobotOperator:
         if abs(move) < 0.1:
             self.twist.angular.z = 0
         else:
-            self.twist.angular.z = move / abs(move) * 0.05
+            angular_speed_factor = self.approach_speed * 50  # 현재 직선 속도(0.02 ~ 0.1)에 비례해서 각속도 변화
+            self.twist.angular.z = move / abs(move) * 0.05 * angular_speed_factor
 
         self.before_direction = -1 if move < 0 else 1
         self.pub.publish(self.twist)
