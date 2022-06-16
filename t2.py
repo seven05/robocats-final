@@ -384,8 +384,11 @@ class RobotOperator:
             print('ERROR : state is wrong, not act find, ', self.current_state)
 
         # 주위를 둘러볼 각도 (한쪽 방향으로)
-        LOOK_AROUND_DEG = 15
-        LOOK_AROUND_DEG_2 = 60
+        STEP_1_DEG = 60
+        STEP_3_DEG = 60
+        STEP_5_DEG = 60
+        STEP_7_DEG = 60
+        STEP_9_DEG = 60
         TURN_ANGULAR_SPEED = 0.2
 
         # Find step #1
@@ -393,22 +396,31 @@ class RobotOperator:
         self.move_default_direction()
 
         command_set = (
-            # Step 1: 왼쪽으로 10도 오른쪽으로 20도 돌고 다시 중앙 정렬
-            self.turn_deg('left', LOOK_AROUND_DEG, TURN_ANGULAR_SPEED) or \
-            self.turn_deg('right', LOOK_AROUND_DEG * 2, TURN_ANGULAR_SPEED) or \
-            self.turn_deg('left', LOOK_AROUND_DEG, TURN_ANGULAR_SPEED) or \
-            # Step 2: 앞으로 80cm 빠르게 이동하면서 탐색
+            # Step 1
+            self.turn_deg('left', STEP_1_DEG, TURN_ANGULAR_SPEED) or \
+            self.turn_deg('right', STEP_1_DEG * 2, TURN_ANGULAR_SPEED) or \
+            self.turn_deg('left', STEP_1_DEG, TURN_ANGULAR_SPEED) or \
+            # Step 2
+            self.forward_meter(1.0, 0.1) or \
+            # Step 3
+            self.turn_deg('left', STEP_3_DEG, TURN_ANGULAR_SPEED) or \
+            self.turn_deg('right', STEP_3_DEG * 2, TURN_ANGULAR_SPEED) or \
+            self.turn_deg('left', STEP_3_DEG - 45, TURN_ANGULAR_SPEED) or \
+            # Step 4
             self.forward_meter(0.8, 0.1) or \
-            self.turn_deg('left', LOOK_AROUND_DEG, TURN_ANGULAR_SPEED) or \
-            # Step 3: 이동한 지점에서 look around 실행
-            self.turn_deg('right', LOOK_AROUND_DEG * 2, TURN_ANGULAR_SPEED) or \
-            self.turn_deg('left', LOOK_AROUND_DEG, TURN_ANGULAR_SPEED) or \
-            # Step 4: 앞으로 80cm 빠르게 이동하면서 탐색
+            # Step 5
+            self.turn_deg('right', STEP_5_DEG, TURN_ANGULAR_SPEED) or \
+            self.turn_deg('left', STEP_5_DEG + 90, TURN_ANGULAR_SPEED) or \
+            # Step 6
             self.forward_meter(0.8, 0.1) or \
-            # Step 5: 이동한 지점에서 look around 실행
-            self.turn_deg('left', LOOK_AROUND_DEG_2, TURN_ANGULAR_SPEED) or \
-            self.turn_deg('right', LOOK_AROUND_DEG_2 * 2, TURN_ANGULAR_SPEED) or \
-            self.turn_deg('left', LOOK_AROUND_DEG_2, TURN_ANGULAR_SPEED)
+            # Step 7
+            self.turn_deg('right', STEP_7_DEG, TURN_ANGULAR_SPEED) or \
+            self.turn_deg('left', STEP_7_DEG + 90, TURN_ANGULAR_SPEED) or \
+            # Step 8
+            self.forward_meter(0.8, 0.1) or \
+            # Step 9
+            self.turn_deg('right', STEP_9_DEG, TURN_ANGULAR_SPEED) or \
+            self.turn_deg('left', STEP_9_DEG + 90, TURN_ANGULAR_SPEED)
         )
 
         if command_set:
