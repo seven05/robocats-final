@@ -46,6 +46,8 @@ class RobotOperator:
         self.yolo_threshold = 0.70
         self.color_threshold = 0.3
         self.yolo_data = None
+        self.yolo_width = None
+        self.yolo_height = None
         self.lidar_data = None
         self.color_data = None
         self.current_state = 'decide'
@@ -221,12 +223,21 @@ class RobotOperator:
             return
 
         # 너무 작은 bottle은 인식하지 않도록 함
-        bottle_center_xs = [(each.xmin + each.xmax) // 2 for each in bottle_boxes if (each.xmax - each.xmin) > 68 and (each.ymax - each.ymin) > 204]
-        if len(bottle_center_xs) > 0:  # 필터링되어 list size = 0이 되면 못찾은걸로 인식함
+        # bottle_center_xs = [(each.xmin + each.xmax) // 2 for each in bottle_boxes if (each.xmax - each.xmin) > 68 and (each.ymax - each.ymin) > 204]
+        bottles = [each for each in bottle_boxes if (each.xmax - each.xmin) > 68 and (each.ymax - each.ymin) > 204]
+        # bottle_center_xs = [(each.xmin + each.xmax) // 2 for each in bottles]
+        if len(bottles) > 0:  # 필터링되어 list size = 0이 되면 못찾은걸로 인식함
             # -1: far right / 0: far left
-            self.yolo_data = sorted(bottle_center_xs)[-1]
+            target_bottle = sorted(bottles, key=lambda bottle: (bottle.xmin + bottle.xmax) // 2)[-1]
+            # self.yolo_data = sorted(bottle_center_xs)[-1]
+            self.yolo_data = (target_bottle.xmin + target_bottle.xmax) // 2
+            self.yolo_width = target_bottle.xmax - target_bottle.xmin
+            self.yolo_height = target_bottle.ymax - target_bottle.ymin
+            print('yolo_width=%f\tyolo_height=%f'%(self.yolo_width, self.yolo_height))
         else:
             self.yolo_data = None
+            self.yolo_width = None
+            self.yolo_height = None
             return
 
     def lidar_callback(self, data):
