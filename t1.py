@@ -315,12 +315,16 @@ class RobotOperator:
         # current state : act_find
         if self.current_state != 'act_find':
             print('ERROR : state is wrong, not act find, ', self.current_state)
+
+        # 주위를 둘러볼 각도 (한쪽 방향으로)
+        LOOK_AROUND_DEG = 10
+
         # Find step #1
+        # 대각 방향으로 정렬
         self.move_default_direction()
-        # self.rotate_previous_direction()
-        # while self.yolo_data is None:
-        #     pass
-        if self.turn_deg('left', 120) or self.turn_deg('right', 240):  # 앞 루틴 True이면 뒤 루틴 실행 안함
+        # 왼쪽으로 10도 오른쪽으로 20도 돌고 다시 중앙 정렬
+        if self.turn_deg('left', LOOK_AROUND_DEG) or self.turn_deg('right', LOOK_AROUND_DEG * 2) or \
+            self.turn_deg('left', LOOK_AROUND_DEG):
             self.found_target_routine()
             return
 
