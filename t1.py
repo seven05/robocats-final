@@ -108,7 +108,8 @@ class RobotOperator:
                 joint_values[joint_idx] = 1.2 * joint_sign
                 print('  >>> [reset grip] move to: %f' % (joint_values[joint_idx],))
             else:
-                joint_values[joint_idx] = 0
+                # joint_values[joint_idx] = 0
+                pass
         if chk:
             arm.go(joint_values, wait=True)
             rospy.sleep(sleep_time)
