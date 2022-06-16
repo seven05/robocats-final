@@ -506,8 +506,12 @@ class RobotOperator:
 
 
 def main():
-    operator = RobotOperator()
-    operator.subscribe()
+    try:
+        operator = RobotOperator()
+        operator.subscribe()
+    except KeyboardInterrupt:
+        operator.robot_halt()
+        sys.exit(0)
 
 
 if __name__ == '__main__':
