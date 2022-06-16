@@ -447,8 +447,9 @@ class RobotOperator:
         if self.yolo_height > self.yolo_height_approach_threshold and self.lidar_data >= self.approach_fix_speed_threshold:
             self.approach_speed = 0.05
         elif self.lidar_data >= self.approach_fix_speed_threshold:
+            MAX_SPEED = 0.1 if self.lidar_data < self.yolo_threshold else 0.05  # color filter 부터는 0.05로 최대 속도 제한
             self.is_yolo_height_approach_print = False
-            new_approach_speed = max(min(0.08 * self.lidar_data - 0.02, 0.1), 0.02)  # speed range: 0.02 ~ 0.1
+            new_approach_speed = max(min(0.08 * self.lidar_data - 0.02, MAX_SPEED), 0.02)  # speed range: 0.02 ~ 0.1
             if new_approach_speed < self.approach_speed:
                 print('[go_front] Update approach speed: distance=%f\tbefore_spee=%f\tspeed=%f' % (self.lidar_data, self.approach_speed, new_approach_speed))
                 self.approach_speed = new_approach_speed  # 작아지는 방향으로만 update
