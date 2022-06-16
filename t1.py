@@ -385,7 +385,7 @@ class RobotOperator:
 
         # 주위를 둘러볼 각도 (한쪽 방향으로)
         LOOK_AROUND_DEG = 15
-        LOOK_AROUND_DEG_2 = 45
+        LOOK_AROUND_DEG_2 = 60
         TURN_ANGULAR_SPEED = 0.2
 
         # Find step #1
