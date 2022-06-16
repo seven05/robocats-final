@@ -54,6 +54,7 @@ class RobotOperator:
         self.now_move_default_direction = False
         self.approach_speed = 0.1  # 접근하면서 변경되는 속도 -> yolo: 접근하면서 감소, color: 0.02 고정
         self.angular_calibration_value = 0.04  # 로봇이 왼쪽으로 틀어지는 현상 보정하기 위해 더해주는 값
+        self.approach_fix_speed_threshold = 0.5
 
         self.find_criterion = 'yolo'
 
@@ -380,16 +381,13 @@ class RobotOperator:
         # print("match_direction published")
 
     def go_front(self):
-        # yolo 거리일 때 남은 거리에 따라 속도 변화
-        if self.lidar_data >= self.yolo_threshold:
-            # y(speed) = 0.1x - 0.05
-            new_approach_speed = max(min(0.1 * self.lidar_data - 0.05, 0.1), 0.02)  # speed range: 0.02 ~ 0.1
-            # print('[go_front] distance=%f\tcalculated_speed=%f' % (self.lidar_data, new_approach_speed))
+        # approach_fix_speed_threshold 거리보다 길 때 남은 거리에 따라 속도 변화
+        if self.lidar_data >= self.approach_fix_speed_threshold:
+            new_approach_speed = max(min(0.08 * self.lidar_data - 0.02, 0.1), 0.02)  # speed range: 0.02 ~ 0.1
             if new_approach_speed < self.approach_speed:
                 print('[go_front] Update approach speed: distance=%f\tbefore_spee=%f\tspeed=%f' % (self.lidar_data, self.approach_speed, new_approach_speed))
                 self.approach_speed = new_approach_speed  # 작아지는 방향으로만 update
-        elif self.lidar_data >= self.color_threshold:
-            # print('[go_front] Fix approach speed to 0.2 (color filter stage)')
+        else:
             self.approach_speed = 0.02
 
         # self.twist.linear.x = 0.02
