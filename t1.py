@@ -101,7 +101,8 @@ class RobotOperator:
         chk = False
         joint_sign_map = [1, -1, 1, -1]
         for joint_idx, joint_sign in enumerate(joint_sign_map):
-            if abs(joint_values[joint_idx]) < 0.6:
+            abs_joint_value = abs(joint_values[joint_idx])
+            if (joint_idx == 0 and 0.05 < abs_joint_value or joint_idx != 0 and 0.1 < abs_joint_value) and abs_joint_value < 0.6:
                 chk = True
                 joint_values[joint_idx] = 1.2 * joint_sign
             else:
