@@ -57,6 +57,8 @@ class RobotOperator:
         self.approach_speed = 0.1  # 접근하면서 변경되는 속도 -> yolo: 접근하면서 감소, color: 0.02 고정
         self.angular_calibration_value = 0.04  # 로봇이 왼쪽으로 틀어지는 현상 보정하기 위해 더해주는 값
         self.approach_fix_speed_threshold = 0.5
+        self.yolo_height_approach_threshold = 430.0  # yolo 높이가 이 기준 이상이면 느리게 움직임
+        self.is_yolo_height_approach_print = False  # yolo 속도 제한 로그 출력 여부
 
         self.find_criterion = 'yolo'
 
@@ -443,10 +445,13 @@ class RobotOperator:
 
     def go_front(self):
         # approach_fix_speed_threshold 거리보다 길 때 남은 거리에 따라 속도 변화
-        if self.yolo_height > 430 and self.lidar_data >= self.approach_fix_speed_threshold:
-            print('[go_front] set approach speed to 0.05 because, yolo height (%f) is bigger than 430' % (self.yolo_height,))
+        if self.yolo_height > self.yolo_height_approach_threshold and self.lidar_data >= self.approach_fix_speed_threshold:
+            if not self.is_yolo_height_approach_print:  # 이전에 로그가 출력되지 않았다면 출력
+                print('[go_front] set approach speed to 0.05 because, yolo height (%f) is bigger than %f' % (self.yolo_height, self.yolo_height_approach_threshold))
+                self.is_yolo_height_approach_print = True
             self.approach_speed = 0.05
         elif self.lidar_data >= self.approach_fix_speed_threshold:
+            self.is_yolo_height_approach_print = False
             new_approach_speed = max(min(0.08 * self.lidar_data - 0.02, 0.1), 0.02)  # speed range: 0.02 ~ 0.1
             if new_approach_speed < self.approach_speed:
                 print('[go_front] Update approach speed: distance=%f\tbefore_spee=%f\tspeed=%f' % (self.lidar_data, self.approach_speed, new_approach_speed))
