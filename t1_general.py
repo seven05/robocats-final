@@ -52,7 +52,6 @@ class RobotOperator:
         self.robot_state = ['decide', 'act_find', 'act_approach', 'act_grip', 'halt']
         self.need_default_direction = False
         self.now_move_default_direction = False
-        self.approach_speed = 0.02  # 접근하면서 변경되는 속도 -> yolo: 접근하면서 감소, color: 0.02 고정
 
         self.find_criterion = 'yolo'
 
@@ -233,7 +232,7 @@ class RobotOperator:
     def deg2rad(self, deg):
         return deg * np.pi / 180
 
-    def turn_deg(self, direction, degree, angular_speed=0.2):
+    def turn_deg(self, direction, degree):
         """direction 방향(left: +, right: -)으로 degree만큼 이동
         """
         print('Turn %s %f deg' % (direction, degree))
@@ -241,7 +240,7 @@ class RobotOperator:
         turn_radian = self.deg2rad(degree)
         start_searching_time = time.time()
 
-        self.twist.angular.z = angular_speed * direction_sign
+        self.twist.angular.z = 0.2 * direction_sign
         target_turn_time = turn_radian / abs(self.twist.angular.z)
         self.pub.publish(self.twist)
 
@@ -258,19 +257,19 @@ class RobotOperator:
         self.robot_halt()
         return find_yolo
 
-    def forward_meter(self, meter, speed=0.05):
+    def forward_meter(self, meter):
         """앞으로 meter만큼 이동
         """
         print('Forward %fm' % (meter,))
         start_searching_time = time.time()
 
-        self.twist.linear.x = speed
-        target_move_time = meter / abs(speed)
+        self.twist.linear.x = 0.05
+        target_turn_time = meter / abs(self.twist.linear.x)
         self.pub.publish(self.twist)
 
         find_yolo = False
 
-        while time.time() - start_searching_time < target_move_time:
+        while time.time() - start_searching_time < target_turn_time:
             if self.yolo_data is not None:  # yolo는 callback으로 찾으므로 데이터 조회해보면 됨
                 print('[Forward %fm] Find bottle using YOLO' % (meter,))
                 find_yolo = True
@@ -309,93 +308,51 @@ class RobotOperator:
         self.set_next_state('decide')
 
     def find_target(self):
-        # TODO: FIXME: 빠르게 이동하면서 찾기
-        # Plan A: 처음에 좌우로 10도씩 둘러봐서 못찾으면 80cm 이동해서 둘러보고 못찾으면 또 80cm 이동해서 둘러보고
-        # Plan B: 처음부터 그냥 직진하면서 찾기 -> 속도는 빠른데 시야에서 살짝 벗어나면?
-
         # current state : act_find
         if self.current_state != 'act_find':
             print('ERROR : state is wrong, not act find, ', self.current_state)
-
-        # 주위를 둘러볼 각도 (한쪽 방향으로)
-        LOOK_AROUND_DEG = 10
-        TURN_ANGULAR_SPEED = 0.2
-
         # Find step #1
-        # 대각 방향으로 정렬
         self.move_default_direction()
-
-        command_set = (
-            # Step 1: 왼쪽으로 10도 오른쪽으로 20도 돌고 다시 중앙 정렬
-            self.turn_deg('left', LOOK_AROUND_DEG, TURN_ANGULAR_SPEED) or \
-            self.turn_deg('right', LOOK_AROUND_DEG * 2, TURN_ANGULAR_SPEED) or \
-            self.turn_deg('left', LOOK_AROUND_DEG, TURN_ANGULAR_SPEED) or \
-            # Step 2: 앞으로 80cm 빠르게 이동하면서 탐색
-            self.forward_meter(0.8, 0.1) or \
-            self.turn_deg('left', LOOK_AROUND_DEG, TURN_ANGULAR_SPEED) or \
-            # Step 3: 이동한 지점에서 look around 실행
-            self.turn_deg('right', LOOK_AROUND_DEG * 2, TURN_ANGULAR_SPEED) or \
-            self.turn_deg('left', LOOK_AROUND_DEG, TURN_ANGULAR_SPEED)
-        )
-
-        if command_set:
+        # self.rotate_previous_direction()
+        # while self.yolo_data is None:
+        #     pass
+        if self.turn_deg('left', 120) or self.turn_deg('right', 240):  # 앞 루틴 True이면 뒤 루틴 실행 안함
             self.found_target_routine()
             return
 
-        # # 왼쪽으로 10도 오른쪽으로 20도 돌고 다시 중앙 정렬
-        # if self.turn_deg('left', LOOK_AROUND_DEG, TURN_ANGULAR_SPEED) or \
-        #     self.turn_deg('right', LOOK_AROUND_DEG * 2, TURN_ANGULAR_SPEED) or \
-        #     self.turn_deg('left', LOOK_AROUND_DEG, TURN_ANGULAR_SPEED):
-        #     self.found_target_routine()
-        #     return
+        # Find step #2
+        print('[find_target] Reset position because not found')
+        self.move_default_direction()
+        # self.forward_meter(0.5)
+        self.forward_heading_lidar(2.3)  # 시작 위치에 따라 0.5m 이동 결과가 달라지므로 최장 길이 기준으로 역산
+        print('[find_target] Find bottle routine in step 2')
+        if self.turn_deg('left', 120) or self.turn_deg('right', 240):  # 앞 루틴 True이면 뒤 루틴 실행 안함
+            self.found_target_routine()
+            return
 
-        # # Find step #2
-        # # 앞으로 80cm 빠르게 이동하면서 탐색
-        # if self.forward_meter(0.8, 0.1):  # TODO: speed가 적절한지 확인 필요
-        #     self.found_target_routine()
-        #     return
+        # Find step #3
+        if self.turn_deg('left', 85):  # 75 deg, but bias calibrated degree
+            self.found_target_routine()
+            return
+        self.forward_meter(0.9)
+        print('[find_target] Find bottle routine in step 3')
+        if self.turn_deg('right', 90) or self.turn_deg('left', 190):  # 앞 루틴 True이면 뒤 루틴 실행 안함, calibrated 180 deg
+            self.found_target_routine()
+            return
 
-        # # Find step #3
-        # # 이동한 지점에서 look around 실행
-        # if self.turn_deg('left', LOOK_AROUND_DEG, TURN_ANGULAR_SPEED) or \
-        #     self.turn_deg('right', LOOK_AROUND_DEG * 2, TURN_ANGULAR_SPEED) or \
-        #     self.turn_deg('left', LOOK_AROUND_DEG, TURN_ANGULAR_SPEED):
-        #     self.found_target_routine()
-        #     return
+        # Find step #4
+        self.forward_meter(0.9)
+        print('[find_target] Find bottle routine in step 4')
+        if self.turn_deg('right', 90) or self.turn_deg('left', 190):  # 앞 루틴 True이면 뒤 루틴 실행 안함, calibrated 180 deg
+            self.found_target_routine()
+            return
 
-        # # # Find step #2
-        # # print('[find_target] Reset position because not found')
-        # # self.move_default_direction()
-        # # # self.forward_meter(0.5)
-        # # self.forward_heading_lidar(2.3)  # 시작 위치에 따라 0.5m 이동 결과가 달라지므로 최장 길이 기준으로 역산
-        # # print('[find_target] Find bottle routine in step 2')
-        # # if self.turn_deg('left', 120) or self.turn_deg('right', 240):  # 앞 루틴 True이면 뒤 루틴 실행 안함
-        # #     self.found_target_routine()
-        # #     return
-
-        # # # Find step #3
-        # # if self.turn_deg('left', 85):  # 75 deg, but bias calibrated degree
-        # #     self.found_target_routine()
-        # #     return
-        # # self.forward_meter(0.9)
-        # # print('[find_target] Find bottle routine in step 3')
-        # # if self.turn_deg('right', 90) or self.turn_deg('left', 190):  # 앞 루틴 True이면 뒤 루틴 실행 안함, calibrated 180 deg
-        # #     self.found_target_routine()
-        # #     return
-
-        # # # Find step #4
-        # # self.forward_meter(0.9)
-        # # print('[find_target] Find bottle routine in step 4')
-        # # if self.turn_deg('right', 90) or self.turn_deg('left', 190):  # 앞 루틴 True이면 뒤 루틴 실행 안함, calibrated 180 deg
-        # #     self.found_target_routine()
-        # #     return
-
-        # # # Find step #5
-        # # self.forward_meter(0.9)
-        # # print('[find_target] Find bottle routine in step 5')
-        # # if self.turn_deg('right', 90) or self.turn_deg('left', 190):  # 앞 루틴 True이면 뒤 루틴 실행 안함, calibrated 180 deg
-        # #     self.found_target_routine()
-        # #     return
+        # Find step #5
+        self.forward_meter(0.9)
+        print('[find_target] Find bottle routine in step 5')
+        if self.turn_deg('right', 90) or self.turn_deg('left', 190):  # 앞 루틴 True이면 뒤 루틴 실행 안함, calibrated 180 deg
+            self.found_target_routine()
+            return
 
     def match_direction(self):
         coordinates_criterion = None
@@ -424,14 +381,7 @@ class RobotOperator:
         # print("match_direction published")
 
     def go_front(self):
-        # yolo 거리일 때 남은 거리에 따라 속도 변화
-        if self.lidar_data >= self.yolo_threshold:
-            self.approach_speed = 0.2 * self.lidar_data - 0.04  # y = 0.2x - 0.04
-        elif self.lidar_data >= self.color_threshold:
-            self.approach_speed = 0.02
-
-        # self.twist.linear.x = 0.02
-        self.twist.linear.x = self.approach_speed  #
+        self.twist.linear.x = 0.02
         self.pub.publish(self.twist)
         time.sleep(0.01)
 
