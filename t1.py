@@ -126,7 +126,12 @@ class RobotOperator:
                 if joint_idx in need_0_joint:
                     target_joint_values.append(-joint_value)
                 elif joint_idx in need_far_joint:
-                    target_joint_values.append(joint_sign_map[joint_idx] * 0.7)
+                    if joint_value * joint_sign_map[joint_idx] > 0:  # 부호 같음
+                        target_joint_values.append(joint_sign_map[joint_idx] * 0.7)
+                    elif joint_value * joint_sign_map[joint_idx] < 0:  # 부호 다름
+                        target_joint_values.append(joint_sign_map[joint_idx] * 0.7 - joint_value)
+                    else:  # 그럴 일은 없겠지만 만약 0이라면
+                        target_joint_values.append(0)
                 else:
                     target_joint_values.append(0)
 
