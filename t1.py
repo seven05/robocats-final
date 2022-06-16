@@ -232,7 +232,7 @@ class RobotOperator:
     def deg2rad(self, deg):
         return deg * np.pi / 180
 
-    def turn_deg(self, direction, degree):
+    def turn_deg(self, direction, degree, angular_speed=0.2):
         """direction 방향(left: +, right: -)으로 degree만큼 이동
         """
         print('Turn %s %f deg' % (direction, degree))
@@ -240,7 +240,7 @@ class RobotOperator:
         turn_radian = self.deg2rad(degree)
         start_searching_time = time.time()
 
-        self.twist.angular.z = 0.2 * direction_sign
+        self.twist.angular.z = angular_speed * direction_sign
         target_turn_time = turn_radian / abs(self.twist.angular.z)
         self.pub.publish(self.twist)
 
@@ -318,13 +318,15 @@ class RobotOperator:
 
         # 주위를 둘러볼 각도 (한쪽 방향으로)
         LOOK_AROUND_DEG = 10
+        TURN_ANGULAR_SPEED = 0.2
 
         # Find step #1
         # 대각 방향으로 정렬
         self.move_default_direction()
         # 왼쪽으로 10도 오른쪽으로 20도 돌고 다시 중앙 정렬
-        if self.turn_deg('left', LOOK_AROUND_DEG) or self.turn_deg('right', LOOK_AROUND_DEG * 2) or \
-            self.turn_deg('left', LOOK_AROUND_DEG):
+        if self.turn_deg('left', LOOK_AROUND_DEG, TURN_ANGULAR_SPEED) or \
+            self.turn_deg('right', LOOK_AROUND_DEG * 2, TURN_ANGULAR_SPEED) or \
+            self.turn_deg('left', LOOK_AROUND_DEG, TURN_ANGULAR_SPEED):
             self.found_target_routine()
             return
 
@@ -336,8 +338,9 @@ class RobotOperator:
 
         # Find step #3
         # 이동한 지점에서 look around 실행
-        if self.turn_deg('left', LOOK_AROUND_DEG) or self.turn_deg('right', LOOK_AROUND_DEG * 2) or \
-            self.turn_deg('left', LOOK_AROUND_DEG):
+        if self.turn_deg('left', LOOK_AROUND_DEG, TURN_ANGULAR_SPEED) or \
+            self.turn_deg('right', LOOK_AROUND_DEG * 2, TURN_ANGULAR_SPEED) or \
+            self.turn_deg('left', LOOK_AROUND_DEG, TURN_ANGULAR_SPEED):
             self.found_target_routine()
             return
 
