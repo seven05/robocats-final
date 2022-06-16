@@ -117,6 +117,18 @@ class RobotOperator:
         if gripper.get_current_joint_values() < 1.2:
             self.gripper_move(1.5)
             rospy.sleep(sleep_time)
+        joint_values = arm.get_current_joint_values()
+        return joint_values[0] < 0.05
+
+    def reset_direction_grip(self):
+        """제일 첫번째 gripper motor만 리셋함
+
+        reset_grip() 결과가 False일 떄 실행
+        """
+        joint_values = arm.get_current_joint_values()
+        self.joint(joint_values[0] + 0.7, 0, 0, 0)
+        joint_values = arm.get_current_joint_values()
+        self.joint(-joint_values[0], 0, 0, 0)
 
     def move_default_direction_callback(self, data):
         """self.need_default_direction가 True일 경우 경기장 가장 긴 대각선 방향을 바라보도록 함
@@ -151,7 +163,8 @@ class RobotOperator:
         rospy.Subscriber('/scan_heading', Float32, self.lidar_callback)
         rospy.Subscriber('/video_source/raw_2', Image, self.color_callback)
         rospy.Subscriber('/scan', LaserScan, self.move_default_direction_callback)
-        self.reset_grip()
+        if not self.reset_grip():
+            self.reset_direction_grip()
         self.current_state = 'decide'
 
         while self.current_state != 'halt':
