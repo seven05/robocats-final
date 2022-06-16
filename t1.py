@@ -334,7 +334,7 @@ class RobotOperator:
             self.turn_deg('left', LOOK_AROUND_DEG, TURN_ANGULAR_SPEED) or \
             # Step 3: 이동한 지점에서 look around 실행
             self.turn_deg('right', LOOK_AROUND_DEG * 2, TURN_ANGULAR_SPEED) or \
-            self.turn_deg('left', LOOK_AROUND_DEG, TURN_ANGULAR_SPEED),
+            self.turn_deg('left', LOOK_AROUND_DEG, TURN_ANGULAR_SPEED)
         )
 
         if command_set:
