@@ -100,6 +100,7 @@ class RobotOperator:
         need_far_threshold = [0.05, 0.1, 0.1, 0.1]  # 최소값 (절대값)
 
         for try_count in range(2):
+            print('[reset_grip] reset grip try: %d' % (try_count + 1))
             joint_values = arm.get_current_joint_values()
 
             all_smaller_than_threshold = True
@@ -107,6 +108,7 @@ class RobotOperator:
                 if abs(joint_value) >= need_far_threshold[joint_idx]:
                     all_smaller_than_threshold = False
             if all_smaller_than_threshold:
+                print('[reset_grip] All joint angle smaller than threshold so, break reset grip loop')
                 break
 
             for joint_idx, joint_value in enumerate(joint_values):
@@ -117,6 +119,8 @@ class RobotOperator:
                 elif abs(joint_value) > need_far_threshold[joint_idx]:
                     need_far_joint.append(joint_idx)
 
+            print('[reset_grip] Move joint angle to 0:', ', '.join([str(each) for each in need_0_joint]))
+            print('[reset_grip] Move joint angle to far:', ', '.join([str(each) for each in need_far_joint]))
             target_joint_values = []
             for joint_idx, joint_value in enumerate(joint_values):
                 if joint_idx in need_0_joint:
@@ -125,29 +129,9 @@ class RobotOperator:
                     target_joint_values.append(joint_sign_map[joint_idx] * 0.7)
                 else:
                     target_joint_values.append(0)
+
+            print('[reset_grip] Execute joint move')
             self.joint(*target_joint_values)
-
-
-        # joint_values = arm.get_current_joint_values()
-        # chk = False
-        # joint_sign_map = [1, -1, 1, -1]
-        # for joint_idx, joint_sign in enumerate(joint_sign_map):
-        #     abs_joint_value = abs(joint_values[joint_idx])
-        #     print('[reset grip] rad of joint %d: %f' % (joint_idx, joint_values[joint_idx]))
-        #     if (joint_idx == 0 and 0.05 < abs_joint_value or joint_idx != 0 and 0.1 < abs_joint_value) and abs_joint_value < 0.6:
-        #         chk = True
-        #         joint_values[joint_idx] = 1.2 * joint_sign
-        #         print('  >>> [reset grip] move to: %f' % (joint_values[joint_idx],))
-        #     else:
-        #         # joint_values[joint_idx] = 0
-        #         pass
-        # if chk:
-        #     arm.go(joint_values, wait=True)
-        #     rospy.sleep(sleep_time)
-        #     time.sleep(5)  # 팔 꺾기까지 딜레이 줘서 그 전에 값 읽는 것 방지
-        # arm.go([0, 0, 0, 0], wait=True)
-        # rospy.sleep(sleep_time)
-        # time.sleep(5)
 
         gripper_value = gripper.get_current_joint_values()[0]
         print('[reset grip] Current gripper value: %f' % (gripper_value,))
