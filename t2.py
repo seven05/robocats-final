@@ -132,7 +132,7 @@ class RobotOperator:
         if(stop):
             self.twist.angular.z = 0
         else:
-            self.twist.linear.x = linear
+            self.twist.angular.z = angular
         #if(linear is not None):
             #twist.angular.z += (linear*0.09)
 
