@@ -17,6 +17,12 @@ from sensor_msgs.msg import Image
 from std_msgs.msg import Float32, String
 from sensor_msgs.msg import LaserScan
 
+
+"""add ros odometry"""
+#https://www.theconstructsim.com/ros-qa-know-pose-robot-python/
+from nav_msgs.msg import Odometry
+from tf.transformations import euler_from_quaternion, quaternion_from_euler
+
 from scipy import ndimage
 
 """ moveit commander settings """
@@ -30,6 +36,13 @@ arm.allow_replanning(True)
 arm.set_planning_time(5)
 sleep_time = 3
 
+"""odometry global variables"""
+ang = None
+sub = None
+
+odom_pose = None
+init_odom = None
+eps = 0.01
 
 class RobotOperator:
     def __init__(self):
@@ -51,13 +64,18 @@ class RobotOperator:
         self.lidar_data = None
         self.color_data = None
         self.current_state = 'decide'
-        self.robot_state = ['decide', 'act_find', 'act_approach', 'act_grip', 'halt']
+        self.robot_state = ['decide', 'act_find', 'act_approach', 'act_grip', 'act_return', 'act_drop_bottle', 'halt']
         self.need_default_direction = False
         self.now_move_default_direction = False
         self.approach_speed = 0.1  # 접근하면서 변경되는 속도 -> yolo: 접근하면서 감소, color: 0.02 고정
         self.angular_calibration_value = 0.04  # 로봇이 왼쪽으로 틀어지는 현상 보정하기 위해 더해주는 값
         self.approach_fix_speed_threshold = 0.5
         self.yolo_height_approach_threshold = 430.0  # yolo 높이가 이 기준 이상이면 느리게 움직임
+        
+        """odometry varaibles"""
+        self.init_pose = None
+        self.deg45_pose = None
+        self.drop_count = 0
 
         self.find_criterion = 'yolo'
 
@@ -66,6 +84,176 @@ class RobotOperator:
 
         gripper.go([0.015, 0.0], wait=True)
         rospy.sleep(sleep_time)
+        
+    """odometry methods start"""
+    def get_odom_yaw(self, odom):
+        orientation_q = odom.orientation
+        orientation_list = [orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w]
+        (roll, pitch, yaw) = euler_from_quaternion(orientation_list)
+        
+        if(yaw < 0):
+            yaw += np.pi * 2
+        
+        return yaw
+    
+    def print_odom_pose(self):
+        global odom_pose
+        print("Odometry pose: ",odom_pose)
+        print("odom x: ", odom_pose.position.x)
+        print("odom y: ", odom_pose.position.y)
+        print("odom yaw : ", self.get_odom_yaw(odom_pose))
+        
+    def odom_callback(self, odom_msg):
+        global odom_pose
+        odom_pose = odom_msg.pose.pose
+        
+    def translate(self, x, y):
+        global sub,ang
+        mat = np.matrix([
+            [np.cos(ang), -np.sin(ang)],
+            [np.sin(ang), np.cos(ang)]
+        ])
+        
+        t = np.dot((x - sub[0], y - sub[1]), mat)[0]
+        
+        print("trasnlated coordinate", t)
+        return t[0, 0], t[0, 1]
+    
+    def manual_move(self, linear=0, angular=0, stop=False):
+
+        if(stop):
+            self.twist.linear.x = 0
+        else:
+            self.twist.linear.x = linear
+        self.twist.linear.y = 0.0
+        self.twist.linear.z = 0.0
+        self.twist.angular.x = 0.0
+        self.twist.angular.y = 0.0
+        if(stop):
+            self.twist.angular.z = 0
+        else:
+            self.twist.linear.x = linear
+        #if(linear is not None):
+            #twist.angular.z += (linear*0.09)
+
+        self.pub.publish(self.twist)
+        time.sleep(0.01)
+        
+    def go_one_meter_front(self, speed=0.05):
+        
+        front_speed = speed
+        self.manual_move(linear=front_speed)
+        
+        moving_time = 0.5 / abs(front_speed)
+        start_time = time.time()
+        rospy.sleep(sleep_time)
+        
+        while(True):
+            cur_time = time.time() 
+            if(cur_time - start_time > moving_time):
+                break
+            time.sleep(0.001)
+        
+        self.manual_move(stop=True)
+        
+    def return_origin2(self):
+        global odom_pose, eps
+        
+        start_odom = odom_pose
+        x_1 = start_odom.position.x
+        y_1 = start_odom.position.y
+        t_x,t_y = self.translate(x_1, y_1)
+        alpha = np.arctan2(t_y, t_x)
+        
+        """turn 180 degrees back"""
+        self.manual_move(angular=0.1)
+        rot_time = time.time()
+        while(True):
+            cur_time = time.time()
+            if(cur_time - rot_time > (np.pi / 0.1) + eps):
+                break
+            
+        cnt = 0
+        while(True):
+            cnt += 1
+            now_coor = self.translate(odom_pose.position.x, odom_pose.position.y)
+            if(abs(now_coor[0]) < 0.07 and abs(now_coor[1]) < 0.07):
+                self.manual_move(stop=True)
+                break
+            if(cnt > 400):
+                break
+                
+            self.manual_move(linear=0.03)
+            start_time = time.time()
+            while(True):
+                now = time.time()
+                if(now - start_time > 0.5):
+                    break
+                time.sleep(0.01)
+            self.manual_move(stop=True)
+            time.sleep(0.01)
+            
+            odom_now = odom_pose
+            x_2 = odom_now.position.x
+            y_2 = odom_now.position.y
+            t_x2,t_y2 = self.translate(x_2, y_2)
+            alpha2 = np.arctan2(t_y2, t_x2)
+            
+            print("alpha2 : ",alpha2, "alpha ", alpha)
+            print(abs(alpha2 - alpha)*4, abs(alpha2 - alpha)*2)
+            
+            if(alpha2 > alpha + eps):
+                self.manual_move(angular=0.1)
+                rot_time = time.time()
+                while(True):
+                    now = time.time()
+                    if(now - rot_time > abs(alpha2 - alpha)*4):
+                        break
+                    time.sleep(0.01)
+                self.manual_move(stop=True)
+                time.sleep(0.01)
+            elif(alpha2 < alpha - eps):
+                self.manual_move(angular= -0.1)
+                rot_time = time.time()
+                while(True):
+                    now = time.time()
+                    if(now - rot_time > abs(alpha2 - alpha)*2):
+                        break
+                    time.sleep(0.01)
+                self.manual_move(stop=True)
+                time.sleep(0.01)
+            else:
+                self.manual_move(linear=0.05)
+                rot_time = time.time()
+                while(True):
+                    now = time.time()
+                    if(now - rot_time > 0.5):
+                        break
+                    time.sleep(0.01)
+                self.manual_move(stop=True)
+                time.sleep(0.01)
+
+    def drop_bottle(self):
+        global odom_pose
+        init_odom_yaw = self.get_odom_yaw(self.deg45_pose) + np.pi
+        if(init_odom_yaw > 2*np.pi + eps):
+            np.pi -= 2*np.pi
+        self.manual_move(angular=0.1)
+        while(True):
+            cur_odom_yaw = self.get_odom_yaw(odom_pose)
+            if(abs(init_odom_yaw - cur_odom_yaw) < eps):
+                break
+            time.sleep(0.01)
+        self.manual_move(stop=True)
+        
+        """release gripper"""
+        self.gripper_move(1.0)
+        
+        if not self.reset_grip():
+            print('[subscribe] 1st motor has very small error, reset again')
+            self.reset_direction_grip()
+        
+        """TODO : actual drop bottle to move arm"""
 
     def joint(self, joint1, joint2, joint3, joint4):
         global arm, sleep_time
@@ -197,16 +385,62 @@ class RobotOperator:
         time.sleep(0.01)
 
     def subscribe(self):
+        global sub, ang
         rospy.init_node('RobotOperator', anonymous=True)
         rospy.Subscriber('/darknet_ros/bounding_boxes', BoundingBoxes, self.yolo_callback)
         rospy.Subscriber('/scan_heading', Float32, self.lidar_callback)
         rospy.Subscriber('/video_source/raw_2', Image, self.color_callback)
         rospy.Subscriber('/scan', LaserScan, self.move_default_direction_callback)
+        rospy.Subscriber('/odom', Odometry, self.odom_callback)
+        
+        """TODO : ADD 45 deg rotate"""
+        
         if not self.reset_grip():
             print('[subscribe] 1st motor has very small error, reset again')
             self.reset_direction_grip()
         self.current_state = 'decide'
 
+        self.deg45_pose = odom_pose
+        """turn 45 degrees by time"""
+        print("turn 45 degrees")
+        self.manual_move(angular= -0.1)
+        rot_time = time.time()
+        while(True):
+            cur_time = time.time()
+            if(abs(cur_time - rot_time) > (0.785398 / 0.1)):
+                self.manual_move(stop=True)
+                break
+            time.sleep(0.001)
+            
+        """initialize coordinates"""
+        print("start coordinate initialization")
+        self.init_pose = odom_pose
+        x_0 = self.init_pose.position.x
+        y_0 = self.init_pose.position.y
+        
+        self.go_one_meter_front()
+        rospy.sleep(sleep_time)
+        
+        cur_odom = odom_pose
+        x_1 = cur_odom.position.x
+        y_1 = cur_odom.position.y
+        
+        print("dist : ", math.sqrt(abs(x_0-x_1)**2 + abs(y_0-y_1)**2))
+        
+        sub = (x_0 , y_0)
+        ang = np.arctan2(y_1 - y_0, x_1 - x_0)
+        print("sub ",sub, "ang", ang)
+        self.translate(x_1, y_1)
+        
+        self.manual_move(linear = -0.05)
+        start_time = time.time()
+        while(True):
+            cur_time = time.time()
+            if(abs(cur_time - start_time) > 10):
+                self.manual_move(stop=True)
+                break
+            time.sleep(0.001)
+        
         while self.current_state != 'halt':
             self.run_proc()
 
@@ -275,7 +509,9 @@ class RobotOperator:
         elif self.current_state == 'act_find' or self.current_state == 'act_approach':
             self.current_state = 'decide'
         elif self.current_state == 'act_grip':
-            self.current_state = 'halt'
+            self.current_state = 'act_return'
+        elif self.current_state == 'act_return':
+            self.current_state = 'act_drop_bottle'
 
     def rotate_previous_direction(self):
         self.twist.angular.z = 0.1 * self.before_direction
@@ -475,7 +711,7 @@ class RobotOperator:
         self.joint(0, 1.1, -0.0, 0.0)
         self.gripper_move(-1.0)
         self.joint(0, -0.8, 0.0, 0.0)
-        self.set_next_state('halt')
+        self.set_next_state('act_return')
         return
 
     def robot_halt(self):
@@ -499,6 +735,17 @@ class RobotOperator:
         self.color_data = None
 
     def run_proc(self):
+        
+        if self.current_state == 'act_return':
+            self.return_origin2()
+            self.set_next_state('act_drop_bottle')
+        
+        if self.current_state == 'act_drop_bottle':
+            self.drop_bottle()
+            if(self.drop_count < 2):
+                self.set_next_state('decide')
+            else:
+                self.set_next_state('halt')
 
         if self.current_state != 'decide':
             return
