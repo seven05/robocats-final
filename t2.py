@@ -157,6 +157,7 @@ class RobotOperator:
         self.manual_move(stop=True)
         
     def return_origin2(self):
+        print("return origin2 start")
         global odom_pose, eps
         
         start_odom = odom_pose
@@ -234,6 +235,7 @@ class RobotOperator:
                 time.sleep(0.01)
 
     def drop_bottle(self):
+        print("drop bottle started")
         global odom_pose
         init_odom_yaw = self.get_odom_yaw(self.deg45_pose) + np.pi
         if(init_odom_yaw > 2*np.pi + eps):
@@ -243,15 +245,14 @@ class RobotOperator:
             cur_odom_yaw = self.get_odom_yaw(odom_pose)
             if(abs(init_odom_yaw - cur_odom_yaw) < eps):
                 break
-            time.sleep(0.01)
+            time.sleep(0.001)
         self.manual_move(stop=True)
         
         """release gripper"""
-        self.gripper_move(1.0)
+        self.joint(0, 1.1, -0.0, 0.0)
+        self.gripper_move(1.5)
         
-        if not self.reset_grip():
-            print('[subscribe] 1st motor has very small error, reset again')
-            self.reset_direction_grip()
+        self.drop_count += 1
         
         """TODO : actual drop bottle to move arm"""
 
