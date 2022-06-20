@@ -408,7 +408,7 @@ class RobotOperator:
         rot_time = time.time()
         while(True):
             cur_time = time.time()
-            if(abs(cur_time - rot_time) > (0.785398 / 0.1)):
+            if(abs(cur_time - rot_time) > (0.785398 / 0.1) + eps):
                 self.manual_move(stop=True)
                 break
             time.sleep(0.001)
@@ -437,7 +437,7 @@ class RobotOperator:
         start_time = time.time()
         while(True):
             cur_time = time.time()
-            if(abs(cur_time - start_time) > 10):
+            if(abs(cur_time - start_time) > 10.0):
                 self.manual_move(stop=True)
                 break
             time.sleep(0.001)
@@ -507,7 +507,7 @@ class RobotOperator:
             else:
                 print('Error in set_next_state')
 
-        elif self.current_state == 'act_find' or self.current_state == 'act_approach':
+        elif self.current_state == 'act_find' or self.current_state == 'act_approach' or self.current_state=='act_drop_bottle':
             self.current_state = 'decide'
         elif self.current_state == 'act_grip':
             self.current_state = 'act_return'
@@ -745,6 +745,15 @@ class RobotOperator:
         if self.current_state == 'act_drop_bottle':
             self.drop_bottle()
             if(self.drop_count < 2):
+                self.reset_grip()
+                init_odom_yaw = self.get_odom_yaw(self.deg45_pose)
+                self.manual_move(angular=0.1)
+                while(True):
+                    cur_odom_yaw = self.get_odom_yaw(odom_pose)
+                    if(abs(init_odom_yaw - cur_odom_yaw) < eps*10):
+                        break
+                    time.sleep(0.001)
+                self.manual_move(stop=True)
                 self.set_next_state('decide')
                 return
             else:
