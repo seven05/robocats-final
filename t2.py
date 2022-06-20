@@ -475,6 +475,14 @@ class RobotOperator:
         self.joint(0, 1.1, -0.0, 0.0)
         self.gripper_move(-1.0)
         self.joint(0, -0.8, 0.0, 0.0)
+        self.manual_move(linear = -0.05)
+        start_time = time.time()
+        while(True):
+            cur_time = time.time()
+            if(abs(cur_time - start_time) > 10.0):
+                self.manual_move(stop=True)
+                break
+            time.sleep(0.001)
         self.set_next_state('halt')
         return
 
