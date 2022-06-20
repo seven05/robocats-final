@@ -179,7 +179,7 @@ class RobotOperator:
         while(True):
             cnt += 1
             now_coor = self.translate(odom_pose.position.x, odom_pose.position.y)
-            if(abs(now_coor[0]) < 0.07 + 0.1 and abs(now_coor[1]) < 0.07):
+            if(abs(now_coor[0]) < 0.07 + 0.1 and abs(now_coor[1]) < 0.07 and abs(now_coor[0]) > 0.05):
                 self.manual_move(stop=True)
                 break
             if(cnt > 400):
@@ -250,7 +250,7 @@ class RobotOperator:
         self.manual_move(stop=True)
         
         """release gripper"""
-        self.joint(0, 1.1, -0.0, 0.0)
+        #self.joint(0, 1.1, -0.0, 0.0)
         self.gripper_move(1.5)
         
         self.drop_count += 1
