@@ -161,9 +161,10 @@ class RobotOperator:
         global odom_pose, eps
         
         start_odom = odom_pose
-        x_1 = start_odom.position.x + 0.1
+        x_1 = start_odom.position.x
         y_1 = start_odom.position.y
         t_x,t_y = self.translate(x_1, y_1)
+        t_x += 0.1
         alpha = np.arctan2(t_y, t_x)
         
         """turn 180 degrees back"""
@@ -178,7 +179,7 @@ class RobotOperator:
         while(True):
             cnt += 1
             now_coor = self.translate(odom_pose.position.x, odom_pose.position.y)
-            if(abs(now_coor[0]) < 0.07 and abs(now_coor[1]) < 0.07):
+            if(abs(now_coor[0]) < 0.07 + 0.1 and abs(now_coor[1]) < 0.07):
                 self.manual_move(stop=True)
                 break
             if(cnt > 400):
@@ -754,6 +755,7 @@ class RobotOperator:
                         break
                     time.sleep(0.001)
                 self.manual_move(stop=True)
+                self.find_criterion = 'yolo'
                 self.set_next_state('decide')
                 return
             else:
