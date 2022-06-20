@@ -730,9 +730,12 @@ class RobotOperator:
         self.joint(0, -0.8, 0.0, 0.0)
         self.manual_move(linear = -0.05)
         start_time = time.time()
+        counter = 4.0
+        if(self.drop_count > 0):
+            counter += 10.0
         while(True):
             cur_time = time.time()
-            if(abs(cur_time - start_time) > 4.0):
+            if(abs(cur_time - start_time) > counter):
                 self.manual_move(stop=True)
                 break
             time.sleep(0.001)
