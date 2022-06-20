@@ -179,7 +179,7 @@ class RobotOperator:
         while(True):
             cnt += 1
             now_coor = self.translate(odom_pose.position.x, odom_pose.position.y)
-            if((abs(now_coor[0]) < 0.07 + 0.2 and abs(now_coor[0])) > 0.1 and abs(now_coor[1]) < 0.1 ):
+            if((abs(now_coor[0]) < 0.07 + 0.2 and abs(now_coor[0])) > 0.05 and abs(now_coor[1]) < 0.1 ):
                 self.manual_move(stop=True)
                 break
             if(cnt > 400):
@@ -732,7 +732,7 @@ class RobotOperator:
         start_time = time.time()
         while(True):
             cur_time = time.time()
-            if(abs(cur_time - start_time) > 5.0):
+            if(abs(cur_time - start_time) > 4.0):
                 self.manual_move(stop=True)
                 break
             time.sleep(0.001)
