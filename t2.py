@@ -17,6 +17,12 @@ from sensor_msgs.msg import Image
 from std_msgs.msg import Float32, String
 from sensor_msgs.msg import LaserScan
 
+
+"""add ros odometry"""
+#https://www.theconstructsim.com/ros-qa-know-pose-robot-python/
+from nav_msgs.msg import Odometry
+from tf.transformations import euler_from_quaternion, quaternion_from_euler
+
 from scipy import ndimage
 
 """ moveit commander settings """
@@ -30,6 +36,13 @@ arm.allow_replanning(True)
 arm.set_planning_time(5)
 sleep_time = 3
 
+"""odometry global variables"""
+ang = None
+sub = None
+
+odom_pose = None
+init_odom = None
+eps = 0.01
 
 class RobotOperator:
     def __init__(self):
@@ -51,13 +64,18 @@ class RobotOperator:
         self.lidar_data = None
         self.color_data = None
         self.current_state = 'decide'
-        self.robot_state = ['decide', 'act_find', 'act_approach', 'act_grip', 'halt']
+        self.robot_state = ['decide', 'act_find', 'act_approach', 'act_grip', 'act_return', 'act_drop_bottle', 'halt']
         self.need_default_direction = False
         self.now_move_default_direction = False
         self.approach_speed = 0.1  # 접근하면서 변경되는 속도 -> yolo: 접근하면서 감소, color: 0.02 고정
         self.angular_calibration_value = 0.04  # 로봇이 왼쪽으로 틀어지는 현상 보정하기 위해 더해주는 값
         self.approach_fix_speed_threshold = 0.5
         self.yolo_height_approach_threshold = 430.0  # yolo 높이가 이 기준 이상이면 느리게 움직임
+        
+        """odometry varaibles"""
+        self.init_pose = None
+        self.deg45_pose = None
+        self.drop_count = 0
 
         self.find_criterion = 'yolo'
 
@@ -66,6 +84,178 @@ class RobotOperator:
 
         gripper.go([0.015, 0.0], wait=True)
         rospy.sleep(sleep_time)
+        
+    """odometry methods start"""
+    def get_odom_yaw(self, odom):
+        orientation_q = odom.orientation
+        orientation_list = [orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w]
+        (roll, pitch, yaw) = euler_from_quaternion(orientation_list)
+        
+        if(yaw < 0):
+            yaw += np.pi * 2
+        
+        return yaw
+    
+    def print_odom_pose(self):
+        global odom_pose
+        print("Odometry pose: ",odom_pose)
+        print("odom x: ", odom_pose.position.x)
+        print("odom y: ", odom_pose.position.y)
+        print("odom yaw : ", self.get_odom_yaw(odom_pose))
+        
+    def odom_callback(self, odom_msg):
+        global odom_pose
+        odom_pose = odom_msg.pose.pose
+        
+    def translate(self, x, y):
+        global sub,ang
+        mat = np.matrix([
+            [np.cos(ang), -np.sin(ang)],
+            [np.sin(ang), np.cos(ang)]
+        ])
+        
+        t = np.dot((x - sub[0], y - sub[1]), mat)[0]
+        
+        print("trasnlated coordinate", t)
+        return t[0, 0], t[0, 1]
+    
+    def manual_move(self, linear=0, angular=0, stop=False):
+
+        if(stop):
+            self.twist.linear.x = 0
+        else:
+            self.twist.linear.x = linear
+        self.twist.linear.y = 0.0
+        self.twist.linear.z = 0.0
+        self.twist.angular.x = 0.0
+        self.twist.angular.y = 0.0
+        if(stop):
+            self.twist.angular.z = 0
+        else:
+            self.twist.angular.z = angular
+        #if(linear is not None):
+            #twist.angular.z += (linear*0.09)
+
+        self.pub.publish(self.twist)
+        time.sleep(0.01)
+        
+    def go_one_meter_front(self, speed=0.05):
+        
+        front_speed = speed
+        self.manual_move(linear=front_speed)
+        
+        moving_time = 0.5 / abs(front_speed)
+        start_time = time.time()
+        rospy.sleep(sleep_time)
+        
+        while(True):
+            cur_time = time.time() 
+            if(cur_time - start_time > moving_time):
+                break
+            time.sleep(0.001)
+        
+        self.manual_move(stop=True)
+        
+    def return_origin2(self):
+        print("return origin2 start")
+        global odom_pose, eps
+        
+        start_odom = odom_pose
+        x_1 = start_odom.position.x
+        y_1 = start_odom.position.y
+        t_x,t_y = self.translate(x_1, y_1)
+        t_x += 0.1
+        alpha = np.arctan2(t_y, t_x)
+        
+        """turn 180 degrees back"""
+        self.manual_move(angular=0.1)
+        rot_time = time.time()
+        while(True):
+            cur_time = time.time()
+            if(cur_time - rot_time > (np.pi / 0.1) + eps):
+                break
+            
+        cnt = 0
+        while(True):
+            cnt += 1
+            now_coor = self.translate(odom_pose.position.x, odom_pose.position.y)
+            if(abs(now_coor[0]) < 0.07 + 0.1 and abs(now_coor[1]) < 0.07 and abs(now_coor[0]) > 0.05):
+                self.manual_move(stop=True)
+                break
+            if(cnt > 400):
+                break
+                
+            self.manual_move(linear=0.03)
+            start_time = time.time()
+            while(True):
+                now = time.time()
+                if(now - start_time > 0.5):
+                    break
+                time.sleep(0.01)
+            self.manual_move(stop=True)
+            time.sleep(0.01)
+            
+            odom_now = odom_pose
+            x_2 = odom_now.position.x
+            y_2 = odom_now.position.y
+            t_x2,t_y2 = self.translate(x_2, y_2)
+            alpha2 = np.arctan2(t_y2, t_x2)
+            
+            print("alpha2 : ",alpha2, "alpha ", alpha)
+            print(abs(alpha2 - alpha)*4, abs(alpha2 - alpha)*2)
+            
+            if(alpha2 > alpha + eps):
+                self.manual_move(angular=0.1)
+                rot_time = time.time()
+                while(True):
+                    now = time.time()
+                    if(now - rot_time > abs(alpha2 - alpha)*4):
+                        break
+                    time.sleep(0.01)
+                self.manual_move(stop=True)
+                time.sleep(0.01)
+            elif(alpha2 < alpha - eps):
+                self.manual_move(angular= -0.1)
+                rot_time = time.time()
+                while(True):
+                    now = time.time()
+                    if(now - rot_time > abs(alpha2 - alpha)*2):
+                        break
+                    time.sleep(0.01)
+                self.manual_move(stop=True)
+                time.sleep(0.01)
+            else:
+                self.manual_move(linear=0.05)
+                rot_time = time.time()
+                while(True):
+                    now = time.time()
+                    if(now - rot_time > 0.5):
+                        break
+                    time.sleep(0.01)
+                self.manual_move(stop=True)
+                time.sleep(0.01)
+
+    def drop_bottle(self):
+        print("drop bottle started")
+        global odom_pose
+        init_odom_yaw = self.get_odom_yaw(self.deg45_pose) + np.pi
+        if(init_odom_yaw > 2*np.pi + eps):
+            init_odom_yaw -= 2*np.pi
+        self.manual_move(angular=0.1)
+        while(True):
+            cur_odom_yaw = self.get_odom_yaw(odom_pose)
+            if(abs(init_odom_yaw - cur_odom_yaw) < eps*10):
+                break
+            time.sleep(0.001)
+        self.manual_move(stop=True)
+        
+        """release gripper"""
+        #self.joint(0, 1.1, -0.0, 0.0)
+        self.gripper_move(1.5)
+        
+        self.drop_count += 1
+        
+        """TODO : actual drop bottle to move arm"""
 
     def joint(self, joint1, joint2, joint3, joint4):
         global arm, sleep_time
@@ -102,7 +292,7 @@ class RobotOperator:
         joint_sign_map = [1, -1, 1, -1]
         need_far_threshold = [0.05, 0.1, 0.1, 0.1]  # 최소값 (절대값)
 
-        for try_count in range(2):
+        for try_count in range(3):
             print('[reset_grip] reset grip try: %d' % (try_count + 1))
             joint_values = arm.get_current_joint_values()
             print('[reset_grip] Read current joint values: %s' % (', '.join([str(each) for each in joint_values])))
@@ -197,16 +387,62 @@ class RobotOperator:
         time.sleep(0.01)
 
     def subscribe(self):
+        global sub, ang
         rospy.init_node('RobotOperator', anonymous=True)
         rospy.Subscriber('/darknet_ros/bounding_boxes', BoundingBoxes, self.yolo_callback)
         rospy.Subscriber('/scan_heading', Float32, self.lidar_callback)
         rospy.Subscriber('/video_source/raw_2', Image, self.color_callback)
         rospy.Subscriber('/scan', LaserScan, self.move_default_direction_callback)
+        rospy.Subscriber('/odom', Odometry, self.odom_callback)
+        
+        """TODO : ADD 45 deg rotate"""
+        
         if not self.reset_grip():
             print('[subscribe] 1st motor has very small error, reset again')
             self.reset_direction_grip()
         self.current_state = 'decide'
 
+        self.deg45_pose = odom_pose
+        """turn 45 degrees by time"""
+        print("turn 45 degrees")
+        self.manual_move(angular= -0.1)
+        rot_time = time.time()
+        while(True):
+            cur_time = time.time()
+            if(abs(cur_time - rot_time) > (0.785398 / 0.1) + eps):
+                self.manual_move(stop=True)
+                break
+            time.sleep(0.001)
+            
+        """initialize coordinates"""
+        print("start coordinate initialization")
+        self.init_pose = odom_pose
+        x_0 = self.init_pose.position.x
+        y_0 = self.init_pose.position.y
+        
+        self.go_one_meter_front()
+        rospy.sleep(sleep_time)
+        
+        cur_odom = odom_pose
+        x_1 = cur_odom.position.x
+        y_1 = cur_odom.position.y
+        
+        print("dist : ", math.sqrt(abs(x_0-x_1)**2 + abs(y_0-y_1)**2))
+        
+        sub = (x_0 , y_0)
+        ang = np.arctan2(y_1 - y_0, x_1 - x_0)
+        print("sub ",sub, "ang", ang)
+        self.translate(x_1, y_1)
+        
+        self.manual_move(linear = -0.05)
+        start_time = time.time()
+        while(True):
+            cur_time = time.time()
+            if(abs(cur_time - start_time) > 10.0):
+                self.manual_move(stop=True)
+                break
+            time.sleep(0.001)
+        
         while self.current_state != 'halt':
             self.run_proc()
 
@@ -272,10 +508,12 @@ class RobotOperator:
             else:
                 print('Error in set_next_state')
 
-        elif self.current_state == 'act_find' or self.current_state == 'act_approach':
+        elif self.current_state == 'act_find' or self.current_state == 'act_approach' or self.current_state=='act_drop_bottle':
             self.current_state = 'decide'
         elif self.current_state == 'act_grip':
-            self.current_state = 'halt'
+            self.current_state = 'act_return'
+        elif self.current_state == 'act_return':
+            self.current_state = 'act_drop_bottle'
 
     def rotate_previous_direction(self):
         self.twist.angular.z = 0.1 * self.before_direction
@@ -384,8 +622,11 @@ class RobotOperator:
             print('ERROR : state is wrong, not act find, ', self.current_state)
 
         # 주위를 둘러볼 각도 (한쪽 방향으로)
-        LOOK_AROUND_DEG = 15
-        LOOK_AROUND_DEG_2 = 60
+        STEP_1_DEG = 60
+        STEP_3_DEG = 60
+        STEP_5_DEG = 60
+        STEP_7_DEG = 60
+        STEP_9_DEG = 60
         TURN_ANGULAR_SPEED = 0.2
 
         # Find step #1
@@ -393,22 +634,31 @@ class RobotOperator:
         self.move_default_direction()
 
         command_set = (
-            # Step 1: 왼쪽으로 10도 오른쪽으로 20도 돌고 다시 중앙 정렬
-            self.turn_deg('left', LOOK_AROUND_DEG, TURN_ANGULAR_SPEED) or \
-            self.turn_deg('right', LOOK_AROUND_DEG * 2, TURN_ANGULAR_SPEED) or \
-            self.turn_deg('left', LOOK_AROUND_DEG, TURN_ANGULAR_SPEED) or \
-            # Step 2: 앞으로 80cm 빠르게 이동하면서 탐색
+            # Step 1
+            self.turn_deg('left', STEP_1_DEG, TURN_ANGULAR_SPEED) or \
+            self.turn_deg('right', STEP_1_DEG * 2, TURN_ANGULAR_SPEED) or \
+            self.turn_deg('left', STEP_1_DEG, TURN_ANGULAR_SPEED) or \
+            # Step 2
+            self.forward_meter(1.0, 0.1) or \
+            # Step 3
+            self.turn_deg('left', STEP_3_DEG, TURN_ANGULAR_SPEED) or \
+            self.turn_deg('right', STEP_3_DEG * 2, TURN_ANGULAR_SPEED) or \
+            self.turn_deg('left', STEP_3_DEG - 45, TURN_ANGULAR_SPEED) or \
+            # Step 4
             self.forward_meter(0.8, 0.1) or \
-            self.turn_deg('left', LOOK_AROUND_DEG, TURN_ANGULAR_SPEED) or \
-            # Step 3: 이동한 지점에서 look around 실행
-            self.turn_deg('right', LOOK_AROUND_DEG * 2, TURN_ANGULAR_SPEED) or \
-            self.turn_deg('left', LOOK_AROUND_DEG, TURN_ANGULAR_SPEED) or \
-            # Step 4: 앞으로 80cm 빠르게 이동하면서 탐색
+            # Step 5
+            self.turn_deg('right', STEP_5_DEG, TURN_ANGULAR_SPEED) or \
+            self.turn_deg('left', STEP_5_DEG + 90, TURN_ANGULAR_SPEED) or \
+            # Step 6
             self.forward_meter(0.8, 0.1) or \
-            # Step 5: 이동한 지점에서 look around 실행
-            self.turn_deg('left', LOOK_AROUND_DEG_2, TURN_ANGULAR_SPEED) or \
-            self.turn_deg('right', LOOK_AROUND_DEG_2 * 2, TURN_ANGULAR_SPEED) or \
-            self.turn_deg('left', LOOK_AROUND_DEG_2, TURN_ANGULAR_SPEED)
+            # Step 7
+            self.turn_deg('right', STEP_7_DEG, TURN_ANGULAR_SPEED) or \
+            self.turn_deg('left', STEP_7_DEG + 90, TURN_ANGULAR_SPEED) or \
+            # Step 8
+            self.forward_meter(0.8, 0.1) or \
+            # Step 9
+            self.turn_deg('right', STEP_9_DEG, TURN_ANGULAR_SPEED) or \
+            self.turn_deg('left', STEP_9_DEG + 90, TURN_ANGULAR_SPEED)
         )
 
         if command_set:
@@ -445,7 +695,10 @@ class RobotOperator:
     def go_front(self):
         # approach_fix_speed_threshold 거리보다 길 때 남은 거리에 따라 속도 변화
         if self.yolo_height > self.yolo_height_approach_threshold and self.lidar_data >= self.approach_fix_speed_threshold:
-            self.approach_speed = 0.05
+            # approach_fix_speed_threshold보다 가까운 거리에서 lidar 값이 튈 경우 빨라질 수 있음
+            # 따라서 0.05보다 낮은 속도로 접근중이었다면 업데이트 하지 않음
+            if self.approach_speed > 0.05:
+                self.approach_speed = 0.05
         elif self.lidar_data >= self.approach_fix_speed_threshold:
             MAX_SPEED = 0.1 if self.lidar_data < self.yolo_threshold else 0.05  # color filter 부터는 0.05로 최대 속도 제한
             self.is_yolo_height_approach_print = False
@@ -507,6 +760,33 @@ class RobotOperator:
         self.color_data = None
 
     def run_proc(self):
+        
+        if self.current_state == 'act_return':
+            self.return_origin2()
+            self.set_next_state('act_drop_bottle')
+            return
+        
+        if self.current_state == 'act_drop_bottle':
+            self.drop_bottle()
+            if(self.drop_count < 2):
+                self.reset_grip()
+                init_odom_yaw = self.get_odom_yaw(self.deg45_pose)
+                self.manual_move(angular=0.1)
+                while(True):
+                    cur_odom_yaw = self.get_odom_yaw(odom_pose)
+                    if(abs(init_odom_yaw - cur_odom_yaw) < eps*10):
+                        break
+                    time.sleep(0.001)
+                self.manual_move(stop=True)
+                self.find_criterion = 'yolo'
+                self.need_default_direction = False
+                self.now_move_default_direction = False
+                self.approach_speed = 0.1  # 접근하면서 변경되는 속도 -> yolo: 접근하면서 감소, color: 0.02 고정
+                self.set_next_state('decide')
+                return
+            else:
+                self.set_next_state('halt')
+                return
 
         if self.current_state != 'decide':
             return
