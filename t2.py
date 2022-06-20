@@ -102,7 +102,7 @@ class RobotOperator:
         joint_sign_map = [1, -1, 1, -1]
         need_far_threshold = [0.05, 0.1, 0.1, 0.1]  # 최소값 (절대값)
 
-        for try_count in range(2):
+        for try_count in range(3):
             print('[reset_grip] reset grip try: %d' % (try_count + 1))
             joint_values = arm.get_current_joint_values()
             print('[reset_grip] Read current joint values: %s' % (', '.join([str(each) for each in joint_values])))
