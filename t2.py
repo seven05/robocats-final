@@ -782,6 +782,10 @@ class RobotOperator:
                 self.need_default_direction = False
                 self.now_move_default_direction = False
                 self.approach_speed = 0.1  # 접근하면서 변경되는 속도 -> yolo: 접근하면서 감소, color: 0.02 고정
+                
+                self.sensor_init()
+                self.chk = False
+                
                 self.set_next_state('decide')
                 return
             else:
