@@ -239,11 +239,11 @@ class RobotOperator:
         global odom_pose
         init_odom_yaw = self.get_odom_yaw(self.deg45_pose) + np.pi
         if(init_odom_yaw > 2*np.pi + eps):
-            np.pi -= 2*np.pi
+            init_odom_yaw -= 2*np.pi
         self.manual_move(angular=0.1)
         while(True):
             cur_odom_yaw = self.get_odom_yaw(odom_pose)
-            if(abs(init_odom_yaw - cur_odom_yaw) < eps):
+            if(abs(init_odom_yaw - cur_odom_yaw) < eps*10):
                 break
             time.sleep(0.001)
         self.manual_move(stop=True)
