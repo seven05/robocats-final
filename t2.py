@@ -161,7 +161,7 @@ class RobotOperator:
         global odom_pose, eps
         
         start_odom = odom_pose
-        x_1 = start_odom.position.x
+        x_1 = start_odom.position.x + 0.1
         y_1 = start_odom.position.y
         t_x,t_y = self.translate(x_1, y_1)
         alpha = np.arctan2(t_y, t_x)
