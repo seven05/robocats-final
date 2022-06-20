@@ -740,13 +740,16 @@ class RobotOperator:
         if self.current_state == 'act_return':
             self.return_origin2()
             self.set_next_state('act_drop_bottle')
+            return
         
         if self.current_state == 'act_drop_bottle':
             self.drop_bottle()
             if(self.drop_count < 2):
                 self.set_next_state('decide')
+                return
             else:
                 self.set_next_state('halt')
+                return
 
         if self.current_state != 'decide':
             return
