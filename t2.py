@@ -68,7 +68,7 @@ class RobotOperator:
         self.need_default_direction = False
         self.now_move_default_direction = False
         self.approach_speed = 0.1  # 접근하면서 변경되는 속도 -> yolo: 접근하면서 감소, color: 0.02 고정
-        self.angular_calibration_value = 0.00  # 로봇이 왼쪽으로 틀어지는 현상 보정하기 위해 더해주는 값
+        self.angular_calibration_value = -0.04  # 로봇이 왼쪽으로 틀어지는 현상 보정하기 위해 더해주는 값
         self.approach_fix_speed_threshold = 0.5
         self.yolo_height_approach_threshold = 430.0  # yolo 높이가 이 기준 이상이면 느리게 움직임
 
@@ -657,7 +657,7 @@ class RobotOperator:
             # Step 8
             self.forward_meter(0.8, 0.1) or \
             # Step 9
-            self.turn_deg('right', STEP_9_DEG, TURN_ANGULAR_SPEED) or \
+            self.turn_deg('right', STEP_9_DEG * 2, TURN_ANGULAR_SPEED) or \
             self.turn_deg('left', STEP_9_DEG + 90, TURN_ANGULAR_SPEED)
         )
 
