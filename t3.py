@@ -469,7 +469,11 @@ class RobotOperator:
         self.joint(0, -0.8, 0.0, 0.0)
 
         time.sleep(5)
-        self.forward_meter(-1, 0.1)
+        self.robot_halt()
+        self.twist.linear.x = -0.1
+        self.pub.publish(self.twist)
+        time.sleep(7)
+        self.robot_halt()
 
         self.set_next_state('halt')
         return
