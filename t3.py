@@ -392,12 +392,12 @@ class RobotOperator:
         # 대각 방향으로 정렬
         # self.move_default_direction()
 
-        self.forward_meter(1.7, 0.2)
+        self.forward_meter(1.6, 0.2)
         self.turn_deg('right', 90, TURN_ANGULAR_SPEED)
         self.forward_meter(0.8, 0.2)
         self.turn_deg('right', 90, TURN_ANGULAR_SPEED)
         command_set = (
-            self.forward_meter(0.5, 0.1)
+            self.forward_meter(0.5, 0.15)
         )
 
         if command_set:
@@ -467,10 +467,11 @@ class RobotOperator:
         self.joint(0, 1.1, -0.0, 0.0)
         self.gripper_move(-1.0)
         self.joint(0, -0.8, 0.0, 0.0)
-        self.set_next_state('halt')
 
         time.sleep(5)
         self.forward_meter(-1, 0.1)
+
+        self.set_next_state('halt')
         return
 
     def robot_halt(self):
