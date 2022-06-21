@@ -22,7 +22,11 @@ python run.py 1
 
 ## 🚧 Progress
 
-- [ ] Task 1: Grip bottle
+- [x] Task 1: Grip bottle
 - [ ] Task 2: Bring bottle to base
-- [ ] Task 3: Remove bottle from the chamber
+- [x] Task 3: Remove bottle from the chamber
 - [ ] Task 4: Remove bottle from the chamber after unlocking
+
+## 📖 Explain
+- 각 task에 대한 최신 코드는 master branch의 t1, t2, t3, t4에 존재합니다.
+- *_general.py는 테스트를 위해 작성된 후 사용되지 않는 legacy code입니다
