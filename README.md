@@ -29,4 +29,5 @@ python run.py 1
 
 ## 📖 Explain
 - 각 task에 대한 최신 코드는 master branch의 t1, t2, t3, t4에 존재합니다.
-- *_general.py는 테스트를 위해 작성된 후 사용되지 않는 legacy code입니다
+- `*_general.py`는 테스트를 위해 작성된 후 사용되지 않는 legacy code입니다
+- `lidar_scan_heading.py`는 heading 방향 좌우 2도씩을 포함한 5도 이내의 최저 거리를 가져와서 `/scan_heading`에 publish하는 모듈입니다
