@@ -390,7 +390,7 @@ class RobotOperator:
 
         # Find step #1
         # 대각 방향으로 정렬
-        self.move_default_direction()
+        # self.move_default_direction()
 
         command_set = (
             # Step 2: 앞으로 80cm 빠르게 이동하면서 탐색
